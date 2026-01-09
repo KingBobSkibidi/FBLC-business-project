@@ -30,13 +30,16 @@ body {
 }
 
 button {
-    background-color: #0077cc;
-    color: white;
+    background-color: #fafafa;
+    color: black;
+    padding: 10px;
     border: 2px solid black;
     border-radius: 12px;
     cursor: pointer;
+    transition: 0.1s;
 }
 
 button:hover {
-    background-color: #005fa3;
+    background-color: #f8f8f8;
+    transform: scale(1.01);
 }

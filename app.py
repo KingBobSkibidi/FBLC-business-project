@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash
 from db import get_db_connection
 
 app = Flask(__name__)
+app.secret_key = "dev-secret-key"
 
 @app.route("/")
 def index():
@@ -16,8 +17,15 @@ def profile():
 def login():
     return render_template("login.html")
 
-@app.route("/register")
+@app.route("/register", methods=["GET", "POST"])
 def register():
+    if request.method == "POST":
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
+        password_hash = generate_password_hash(password)
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
     return render_template("register.html")
 
 if __name__ == "__main__":

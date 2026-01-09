@@ -2,15 +2,28 @@
 <html>
 
 <head>
-    <title> Locally </title>
+    <title> Register | Locally </title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
     <h1> Register </h1>  
-        <a href="{{ url_for('index') }}"> Explore </a> 
+    
+    <a href="{{ url_for('index') }}"> Explore </a> 
     <a href="{{ url_for('profile') }}"> Profile </a> 
-    </a> <a href="{{ url_for('login') }}"> Login </a>
+    <a href="{{ url_for('login') }}"> Login </a>
+    <a href="{{ url_for('register') }}"> Register </a>
+
+    <h1> Create An Account </h1>  
+    <form method="POST">
+        <label> Username </label><br>
+        <input type="text" name="username" required><br><br>
+
+        <label> Password </label><br>
+        <input type="text" name="password" required><br><br>
+
+        <button type="submit"> Register </button>
+    </form>
 </body>
 
 </html>
