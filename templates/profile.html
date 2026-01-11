@@ -1,17 +1,21 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
+    
 <head>
+    <meta charset="UTF-8">
     <title> Profile | Locally </title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
-    <h1> Profile </h1>  
-    <a href="{{ url_for('index') }}"> Explore </a> 
-    <a href="{{ url_for('profile') }}"> Profile </a> 
-    <a href="{{ url_for('login') }}"> Login </a>
-    <a href="{{ url_for('register') }}"> Register </a>
+    <h1 class="center_text"> Profile </h1>  
+    
+    <div class="navbar">
+        <a href="{{ url_for('index') }}"> Explore </a> 
+        <a href="{{ url_for('profile') }}"> Profile </a> 
+        <a href="{{ url_for('login') }}"> Login </a>
+        <a href="{{ url_for('register') }}"> Register </a>
+    </div>
 </body>
 
 </html>

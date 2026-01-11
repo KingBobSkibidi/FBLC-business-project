@@ -12,16 +12,30 @@ body {
     padding: 20px;
 }
 
+.center_text {
+    margin: 15px;  
+    text-align: center; 
+}
+
+.input {
+    border: 2px solid black;
+}
+
 .navbar {
     border: 2px solid black;
+    display: flex;
+    justify-content: space-evenly;
     align-items: center;
     position:sticky;
+    padding: 10px 30px;
+    margin-bottom: 30px;
     top: 0;
     z-index: 1000;
 }
 
 .navbar a {
     text-decoration: none;
+    padding: 10px 20px 10px 0;
     transition: transform 0.1s;
 }
 
@@ -32,7 +46,8 @@ body {
 button {
     background-color: #fafafa;
     color: black;
-    padding: 10px;
+    padding: 8px;
+    margin: 10px 0;
     border: 2px solid black;
     border-radius: 12px;
     cursor: pointer;

@@ -4,7 +4,7 @@ import psycopg
 DB_CONFIG = {
     "dbname": "locally",
     "user": "postgres",
-    "password": "YOUR_PASSWORD",  # replace with your password
+    "password": "Bai12345!", 
     "host": "localhost",
     "port": 5432
 }
