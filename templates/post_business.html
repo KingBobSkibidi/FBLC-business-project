@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title> Your Business | Locally </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <h1 class="center_text">Post Your Business</h1>
+
+    <div class="navbar">
+        <a href="{{ url_for('index') }}"> Explore </a>
+
+        {% if session.get("user_id") %}
+            <a href="{{ url_for('profile') }}">Profile</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+    </div>
+
+    <h2 class="center_text">Enter Business Information</h2>
+
+    <div class="center_text">
+        <form method="POST">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name" required><br><br>
+
+            <label for="category">Category</label>
+            <input type="text" name="category" id="category" required><br><br>
+
+            <label for="description">Description</label>
+            <textarea name="description" id="description" required></textarea><br><br>
+
+            <label for="location">Location</label>
+            <input type="text" name="location" id="location" required><br><br>
+        </form>
+    </div>
+</body>
+
+</html>

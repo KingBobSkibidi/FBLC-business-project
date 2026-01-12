@@ -6,15 +6,52 @@
     <title> Profile | Locally </title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-
-<body>
-    <h1 class="center_text"> Profile </h1>  
+="center_text"> Profile </h1>  
     
     <div class="navbar">
-        <a href="{{ url_for('index') }}"> Explore </a> 
-        <a href="{{ url_for('profile') }}"> Profile </a> 
-        <a href="{{ url_for('login') }}"> Login </a>
-        <a href="{{ url_for('register') }}"> Register </a>
+        <a href="{{ url_for('index') }}">Explore</a>
+
+        {% if session.get("user_id") %}
+            <a href="{{ url_for('profile') }}">Profile</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+    </div>
+    <!-- User Info -->
+    <div class="center_text">
+        <h2>Account Info</h2>
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+    </div>
+
+    <!-- Your Business -->
+    <div class="center_text">
+        <h2>Your Busin
+<body>
+    <h1 classess</h2>
+        {% if user_business %}
+            <p><strong>Name:</strong> {{ user_business.name }}</p>
+            <p><strong>Category:</strong> {{ user_business.category }}</p>
+            <p><strong>Description:</strong> {{ user_business.description }}</p>
+            <p><strong>Location:</strong> {{ user_business.location }}</p>
+        {% else %}
+            <p>You haven't posted a business yet.</p>
+            <a href="{{ url_for('post_business') }}">Post Your Business</a>
+        {% endif %}
+    </div>
+
+    <!-- Saved Businesses (Placeholder) -->
+    <div class="center_text">
+        <h2>Saved Businesses</h2>
+        <p>[Placeholder: Your saved businesses will appear here]</p>
+    </div>
+
+    <!-- Reviews (Placeholder) -->
+    <div class="center_text">
+        <h2>Your Reviews</h2>
+        <p>[Placeholder: Your reviews of businesses will appear here]</p>
     </div>
 </body>
 

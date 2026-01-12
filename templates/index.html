@@ -11,10 +11,15 @@
     <h1 class="center_text"> Explore </h1>  
     
     <div class="navbar">
-        <a href="{{ url_for('index') }}"> Explore </a> 
-        <a href="{{ url_for('profile') }}"> Profile </a> 
-        <a href="{{ url_for('login') }}"> Login </a>
-        <a href="{{ url_for('register') }}"> Register </a>
+        <a href="{{ url_for('index') }}">Explore</a>
+
+        {% if session.get("user_id") %}
+            <a href="{{ url_for('profile') }}">Profile</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
     </div>
 </body>
 

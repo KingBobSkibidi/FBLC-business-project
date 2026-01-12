@@ -8,17 +8,22 @@
 </head>
 
 <body>
-    <h1 class="center_text"> Register </h1>  
-    
+    <h1 class="center_text"> Register </h1>
+
     <div class="navbar">
-        <a href="{{ url_for('index') }}"> Explore </a> 
-        <a href="{{ url_for('profile') }}"> Profile </a> 
-        <a href="{{ url_for('login') }}"> Login </a>
-        <a href="{{ url_for('register') }}"> Register </a>
+        <a href="{{ url_for('index') }}">Explore</a>
+
+        {% if session.get("user_id") %}
+            <a href="{{ url_for('profile') }}">Profile</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
     </div>
-    
+
     <div class="center_text">
-        <h1> Create An Account </h1>  
+        <h1> Create An Account </h1>
         <form method="POST">
             <label for="username"> Username </label><br>
             <input type="text" name="username" id="username" required><br><br>
@@ -29,7 +34,7 @@
             <label for="password"> Password </label><br>
             <input type="text" name="password" id="password" required><br><br>
 
-            <button type="submit"> Register </button>
+            <button type="submit" style="margin-top: 0;"> Register </button>
         </form>
 
         <p>
