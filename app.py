@@ -35,11 +35,11 @@ def profile():
     cur = conn.cursor()
 
     #get user's info
-    cur.execute("SELECT username, email FROM users WHERE id = %s", (user_id,))
+    cur.execute("SELECT username, email FROM users WHERE id = %s", (user_id,)) #%s placeholder, avoid sql injection
     user = cur.fetchone() 
 
     #get user's business if it exists
-    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
+    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,)) #%s placeholder, avoid sql injection
     user_business = cur.fetchone()
 
     cur.close()
@@ -58,7 +58,7 @@ def post_business():
     cur = conn.cursor()
 
     #check if user already has a business
-    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
+    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,)) #%s placeholder, avoid sql injection
     existing = cur.fetchone()
 
     if existing: #if they already have a business
@@ -76,8 +76,8 @@ def post_business():
         try:
             # Insert into database
             cur.execute(
-                "INSERT INTO businesses (owner_id, name, category, description, location) VALUES (%s, %s, %s, %s, %s)",
-                (user_id, name, category, description, location)
+                "INSERT INTO businesses (owner_id, name, category, description, location) VALUES (%s, %s, %s, %s, %s)", #%s placeholder, avoid sql injection
+                (user_id, name, category, description, location) 
             )
             conn.commit()
 
