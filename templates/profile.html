@@ -6,8 +6,11 @@
     <title> Profile | Locally </title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-="center_text"> Profile </h1>  
-    
+
+<body>
+    <h1 class="center_text"> Profile </h1>
+
+    <!-- navigation bar -->
     <div class="navbar">
         <a href="{{ url_for('index') }}">Explore</a>
 
@@ -19,18 +22,17 @@
             <a href="{{ url_for('register') }}">Register</a>
         {% endif %}
     </div>
-    <!-- User Info -->
+
+    <!-- user Info -->
     <div class="center_text">
         <h2>Account Info</h2>
         <p><strong>Username:</strong> {{ user.username }}</p>
         <p><strong>Email:</strong> {{ user.email }}</p>
     </div>
 
-    <!-- Your Business -->
+    <!-- your Business -->
     <div class="center_text">
-        <h2>Your Busin
-<body>
-    <h1 classess</h2>
+        <h2>Your Business:</h2>
         {% if user_business %}
             <p><strong>Name:</strong> {{ user_business.name }}</p>
             <p><strong>Category:</strong> {{ user_business.category }}</p>
@@ -42,13 +44,13 @@
         {% endif %}
     </div>
 
-    <!-- Saved Businesses (Placeholder) -->
+    <!-- saved Businesses (placeholder) -->
     <div class="center_text">
         <h2>Saved Businesses</h2>
         <p>[Placeholder: Your saved businesses will appear here]</p>
     </div>
 
-    <!-- Reviews (Placeholder) -->
+    <!-- reviews (placeholder) -->
     <div class="center_text">
         <h2>Your Reviews</h2>
         <p>[Placeholder: Your reviews of businesses will appear here]</p>
