@@ -19,10 +19,22 @@ def login_required(f): #f is placeholder for original function
     
     return decorated_function #return the wrapped function to replace original
 
-#Explore page/function
+#explore page/function
 @app.route("/")
 def index():
-    return render_template("index.html")
+    #initialize
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    #get businesses info
+    cur.execute("SELECT id, name, description, location FROM businesses ORDER BY id DESC")
+    businesses = cur.fetchall()
+    
+    #close cursor and database
+    cur.close()
+    conn.close()
+
+    return render_template("index.html", businesses=businesses)
 
 #profile page/function
 @app.route("/profile")
@@ -42,6 +54,7 @@ def profile():
     cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,)) #%s placeholder, avoid sql injection
     user_business = cur.fetchone()
 
+    #close cursor and database
     cur.close()
     conn.close()
 

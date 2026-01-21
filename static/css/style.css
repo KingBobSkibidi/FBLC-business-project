@@ -25,6 +25,24 @@ a, p {
     border: 2px solid black;
 }
 
+input, textarea, select {
+    border: 2px solid black;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #fff;
+}
+
+input, select {
+    width: min(520px, 100%);
+}
+
+textarea {
+    width: min(520px, 100%);
+    min-height: 120px;
+    resize: vertical;
+}
+
 .navbar {
     border: 2px solid black;
     display: flex;
@@ -35,6 +53,8 @@ a, p {
     margin-bottom: 30px;
     top: 0;
     z-index: 1000;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .navbar a {
@@ -61,4 +81,52 @@ button {
 button:hover {
     background-color: #f8f8f8;
     transform: scale(1.01);
+}
+
+.page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.card {
+    border: 2px solid black;
+    background-color: #fafafa;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+}
+
+.card-photo {
+    height: 140px;
+    border: 2px solid black;
+    background-color: #e9e9e9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 20px;
+}
+
+.card-location {
+    margin: 0;
+    font-weight: bold;
+}
+
+.card-description {
+    margin: 0;
+    line-height: 1.5;
+    max-height: 3em; /* 3 * fontsize */
+    overflow: hidden;
 }
