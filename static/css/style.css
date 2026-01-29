@@ -21,24 +21,16 @@ a, p {
     text-align: center; 
 }
 
-.input {
-    border: 2px solid black;
-}
-
 input, textarea, select {
     border: 2px solid black;
     padding: 8px;
     border-radius: 8px;
     font-size: 16px;
     background-color: #fff;
-}
-
-input, select {
     width: min(520px, 100%);
 }
 
 textarea {
-    width: min(520px, 100%);
     min-height: 120px;
     resize: vertical;
 }
@@ -97,31 +89,45 @@ button:hover {
 .card {
     border: 2px solid black;
     background-color: #fafafa;
-    color: inherit;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    min-height: 180px;
+    font-size: 19px;
+    position: relative;
 }
 
 .card-photo {
-    height: 140px;
+    width: 30%;
+    height: 150px;
+    flex: 0 0 30%;
     border: 2px solid black;
-    background-color: #e9e9e9;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
 }
 
+.card-body {
+    flex: 1 1 70%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-left: 10px;
+    padding-right: 76px;
+}
+
 .card-title {
     margin: 0;
-    font-size: 20px;
+    font-size: 24px;
 }
 
 .card-location {
     margin: 0;
     font-weight: bold;
+    text-transform: capitalize;
 }
 
 .card-description {
@@ -129,4 +135,13 @@ button:hover {
     line-height: 1.5;
     max-height: 3em; /* 3 * fontsize */
     overflow: hidden;
+}
+
+.card-save {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    margin: 0;
+    font-size: 14px;
+    padding: 6px 10px;
 }

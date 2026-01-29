@@ -29,12 +29,17 @@
             {% if businesses %}
                 {% for business in businesses %}
                     <div class="card">
+                        <button class="card-save" type="button">Save</button>
+
                         <div class="card-photo"> <!-- place holder for now, no images yet -->
                             Photo
                         </div>
-                        <h2 class="card-title">{{ business.name }}</h2>
-                        <p class="card-location">{{ business.location }}</p>
-                        <p class="card-description">{{ business.description }}</p>
+                        
+                        <div class="card-body">
+                            <h2 class="card-title">{{ business.name }}</h2>
+                            <p class="card-location">{{ business.location }}</p>
+                            <p class="card-description">{{ business.description }}</p>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
