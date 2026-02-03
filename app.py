@@ -29,12 +29,44 @@ def index():
     #get businesses info
     cur.execute("SELECT id, name, description, location FROM businesses ORDER BY id DESC")
     businesses = cur.fetchall()
+
+    saved_business_ids = []
+    if "user_id" in session:
+        cur.execute("SELECT business_id FROM saved_businesses WHERE user_id = %s", (session["user_id"],))
+        saved_business_ids = [row["business_id"] for row in cur.fetchall()]
     
     #close cursor and database
     cur.close()
     conn.close()
 
-    return render_template("index.html", businesses=businesses)
+    return render_template("index.html", businesses=businesses, saved_business_ids=saved_business_ids)
+
+@app.route("/save-business/<int:business_id>", methods=["POST"])
+def save_business(business_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    #initialize
+    user_id = session["user_id"]
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT INTO saved_businesses (user_id, business_id)
+        SELECT %s, id FROM businesses WHERE id = %s
+        ON CONFLICT (user_id, business_id) DO NOTHING
+        """,
+        (user_id, business_id)
+    )
+    conn.commit()
+
+    #close cursor and database
+    cur.close()
+    conn.close()
+
+    return redirect(url_for("index"))
 
 #profile page/function
 @app.route("/profile")
@@ -54,11 +86,24 @@ def profile():
     cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,)) #%s placeholder, avoid sql injection
     user_business = cur.fetchone()
 
+    #get user's saved businesses
+    cur.execute(
+        """
+        SELECT b.id, b.name, b.description, b.location
+        FROM saved_businesses sb
+        JOIN businesses b ON b.id = sb.business_id
+        WHERE sb.user_id = %s
+        ORDER BY sb.id DESC
+        """,
+        (user_id,)
+    )
+    saved_businesses = cur.fetchall()
+
     #close cursor and database
     cur.close()
     conn.close()
 
-    return render_template("profile.html", user=user, user_business=user_business)
+    return render_template("profile.html", user=user, user_business=user_business, saved_businesses=saved_businesses)
 
 #post business page/function
 @app.route("/post-business", methods=["GET", "POST"])

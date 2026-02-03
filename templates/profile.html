@@ -34,21 +34,41 @@
     <div class="center_text">
         <h2>Your Business:</h2>
         {% if user_business %}
-            <p><strong>Name:</strong>{{ user_business.name }}</p>
-            <p><strong>Category:</strong>{{ user_business.category }}</p>
-            <p><strong>Description:</strong>{{ user_business.description }}</p>
-            <p><strong>Location:</strong>{{ user_business.location }}</p>
+            <p><strong>Name:</strong> {{ user_business.name|capitalize }}</p>
+            <p><strong>Category:</strong> {{ user_business.category }}</p>
+            <p><strong>Description:</strong> {{ user_business.description }}</p>
+            <p><strong>Location:</strong> {{ user_business.location|title }}</p>
         {% else %}
             <p>You haven't posted a business yet.</p>
             <a href="{{ url_for('post_business') }}">Post Your Business</a>
         {% endif %}
     </div>
 
-    <!-- saved businesses (placeholder) -->
+    <!-- saved businesses -->
     <div class="center_text">
         <h2>Saved Businesses</h2>
-        <p>[Placeholder: Your saved businesses will appear here]</p>
     </div>
+    <main class="page">
+        <section class="card-grid one-column">
+            {% if saved_businesses %}
+                {% for business in saved_businesses %}
+                    <div class="card">
+                        <div class="card-photo">
+                            Photo
+                        </div>
+
+                        <div class="card-body">
+                            <h2 class="card-title">{{ business.name|capitalize }}</h2>
+                            <p class="card-location">{{ business.location|title }}</p>
+                            <p class="card-description">{{ business.description }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="center_text">You have not saved any businesses yet.</p>
+            {% endif %}
+        </section>
+    </main>
 
     <!-- reviews (placeholder) -->
     <div class="center_text">

@@ -29,15 +29,21 @@
             {% if businesses %}
                 {% for business in businesses %}
                     <div class="card">
-                        <button class="card-save" type="button">Save</button>
+                        <form method="POST" action="{{ url_for('save_business', business_id=business.id) }}">
+                            {% if business.id in saved_business_ids %}
+                                <button class="card-save" type="button" disabled>Saved</button>
+                            {% else %}
+                                <button class="card-save" type="submit">Save</button>
+                            {% endif %}
+                        </form>
 
                         <div class="card-photo"> <!-- place holder for now, no images yet -->
                             Photo
                         </div>
                         
                         <div class="card-body">
-                            <h2 class="card-title">{{ business.name }}</h2>
-                            <p class="card-location">{{ business.location }}</p>
+                            <h2 class="card-title">{{ business.name|capitalize }}</h2>
+                            <p class="card-location">{{ business.location|title }}</p>
                             <p class="card-description">{{ business.description }}</p>
                         </div>
                     </div>
