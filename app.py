@@ -1,23 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db_connection
-from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
-
-#login_required decorator
-def login_required(f): #f is placeholder for original function
-    @wraps(f) #@wraps copies original meta data
-    def decorated_function(): #wrapper
-
-        #check if user not logged in
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-        
-        return f() #call original function if logged in
-    
-    return decorated_function #return the wrapped function to replace original
 
 #explore page/function
 @app.route("/")
@@ -58,20 +44,44 @@ def save_business(business_id):
         SELECT %s, id FROM businesses WHERE id = %s
         ON CONFLICT (user_id, business_id) DO NOTHING
         """,
-        (user_id, business_id)
+        (user_id, business_id),
     )
+
     conn.commit()
 
     #close cursor and database
     cur.close()
     conn.close()
 
-    return redirect(url_for("index"))
+    return redirect(request.referrer or url_for("index"))
+
+@app.route("/unsave-business/<int:business_id>", methods=["POST"])
+def unsave_business(business_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM saved_businesses WHERE user_id = %s AND business_id = %s",
+        (user_id, business_id),
+    )
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return redirect(request.referrer or url_for("index"))
 
 #profile page/function
 @app.route("/profile")
-@login_required
 def profile():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
     #initialize
     user_id = session["user_id"]
     
@@ -107,8 +117,10 @@ def profile():
 
 #post business page/function
 @app.route("/post-business", methods=["GET", "POST"])
-@login_required
 def post_business():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
     #initialize
     user_id = session["user_id"]
 

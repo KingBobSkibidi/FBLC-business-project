@@ -53,6 +53,10 @@
             {% if saved_businesses %}
                 {% for business in saved_businesses %}
                     <div class="card">
+                        <form method="POST" action="{{ url_for('unsave_business', business_id=business.id) }}">
+                            <button class="card-save" type="submit">Saved</button>
+                        </form>
+
                         <div class="card-photo">
                             Photo
                         </div>
