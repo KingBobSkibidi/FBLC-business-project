@@ -42,6 +42,13 @@
                 {% endfor %}
             </select>
             <br><br>
+            <select name="sort" aria-label="Sort businesses">
+                <option value="" {% if not selected_sort %}selected{% endif %}>Newest</option>
+                <option value="oldest" {% if selected_sort == "oldest" %}selected{% endif %}>Oldest</option>
+                <option value="rating" {% if selected_sort == "rating" %}selected{% endif %}>Rating (high to low)</option>
+                <option value="rating_low" {% if selected_sort == "rating_low" %}selected{% endif %}>Rating (low to high)</option>
+            </select>
+            <br><br>
             <button type="submit">Apply</button>
             <a href="{{ url_for('index') }}" style="margin-left: 10px;">Clear</a>
         </form>
@@ -68,7 +75,14 @@
                         </div>
                         
                         <div class="card-body">
-                            <h2 class="card-title">{{ business.name|capitalize }}</h2>
+                            <h2 class="card-title">
+                                {{ business.name|title }}
+                                {% if business.rating_count > 0 %}
+                                    <span class="card-rating">({{ "%.1f"|format(business.avg_rating) }}/5)</span>
+                                {% else %}
+                                    <span class="card-rating">(Not rated)</span>
+                                {% endif %}
+                            </h2>
                             {% if business.category %}
                                 <p><strong>Category:</strong> {{ business.category }}</p>
                             {% endif %}

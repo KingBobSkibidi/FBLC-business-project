@@ -125,8 +125,13 @@ button:hover {
 }
 
 .card-title {
-    margin: 0;
     font-size: 24px;
+}
+
+.card-rating {
+    font-size: 20px;
+    font-weight: normal;
+    margin-left: 4px;
 }
 
 .card-location {

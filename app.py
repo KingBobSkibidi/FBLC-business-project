@@ -24,25 +24,48 @@ def index():
 
     category_filter = request.args.get("category", "").strip()
     search_term = request.args.get("q", "").strip()
+    sort_by = request.args.get("sort", "").strip()
 
-    #get businesses info
-    query = "SELECT id, name, category, description, location FROM businesses"
+    #get businesses info (with ratings)
+    query = """
+        SELECT
+            b.id,
+            b.name,
+            b.category,
+            b.description,
+            b.location,
+            AVG(r.rating) AS avg_rating,
+            COUNT(r.rating) AS rating_count
+        FROM businesses b
+        LEFT JOIN ratings r ON r.business_id = b.id
+    """
     params = []
     conditions = []
 
     if category_filter:
-        conditions.append("category = %s")
+        conditions.append("b.category = %s")
         params.append(category_filter)
 
     if search_term:
-        conditions.append("name ILIKE %s")
+        conditions.append("b.name ILIKE %s")
         pattern = f"%{search_term}%"
         params.append(pattern)
 
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
 
-    query += " ORDER BY id DESC"
+    order_clause = "b.id DESC"
+    if sort_by == "rating":
+        order_clause = "avg_rating DESC NULLS LAST, rating_count DESC, b.id DESC"
+    elif sort_by == "rating_low":
+        order_clause = "avg_rating ASC NULLS FIRST, rating_count DESC, b.id DESC"
+    elif sort_by == "oldest":
+        order_clause = "b.id ASC"
+
+    query += f"""
+        GROUP BY b.id, b.name, b.category, b.description, b.location
+        ORDER BY {order_clause}
+    """
     cur.execute(query, params)
     businesses = cur.fetchall()
 
@@ -62,6 +85,7 @@ def index():
         categories=BUSINESS_CATEGORIES,
         selected_category=category_filter,
         search_term=search_term,
+        selected_sort=sort_by,
     )
 
 @app.route("/business/<int:business_id>")
@@ -75,13 +99,84 @@ def business_details(business_id):
     )
     business = cur.fetchone()
 
+    if not business:
+        cur.close()
+        conn.close()
+        return "Business not found.", 404
+
+    cur.execute(
+        """
+        SELECT AVG(rating) AS avg_rating, COUNT(*) AS rating_count
+        FROM ratings
+        WHERE business_id = %s
+        """,
+        (business_id,),
+    )
+    rating_stats = cur.fetchone()
+
+    user_rating = None
+    if "user_id" in session:
+        cur.execute(
+            """
+            SELECT rating
+            FROM ratings
+            WHERE user_id = %s AND business_id = %s
+            """,
+            (session["user_id"], business_id),
+        )
+        user_row = cur.fetchone()
+        if user_row:
+            user_rating = user_row["rating"]
+
     cur.close()
     conn.close()
 
-    if not business:
+    return render_template(
+        "business_details.html",
+        business=business,
+        avg_rating=rating_stats["avg_rating"],
+        rating_count=rating_stats["rating_count"],
+        user_rating=user_rating,
+    )
+
+@app.route("/rate-business/<int:business_id>", methods=["POST"])
+def rate_business(business_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    rating_value = request.form.get("rating", "").strip()
+    try:
+        rating_value = int(rating_value)
+    except ValueError:
+        return "Invalid rating.", 400
+
+    if rating_value < 1 or rating_value > 5:
+        return "Invalid rating.", 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT id FROM businesses WHERE id = %s", (business_id,))
+    if not cur.fetchone():
+        cur.close()
+        conn.close()
         return "Business not found.", 404
 
-    return render_template("business_details.html", business=business)
+    cur.execute(
+        """
+        INSERT INTO ratings (user_id, business_id, rating)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (user_id, business_id)
+        DO UPDATE SET rating = EXCLUDED.rating
+        """,
+        (session["user_id"], business_id, rating_value),
+    )
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return redirect(url_for("business_details", business_id=business_id))
 
 @app.route("/save-business/<int:business_id>", methods=["POST"])
 def save_business(business_id):

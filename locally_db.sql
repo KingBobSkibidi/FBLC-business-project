@@ -18,15 +18,14 @@ CREATE TABLE IF NOT EXISTS businesses (
 CREATE TABLE IF NOT EXISTS saved_businesses (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE
+    business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    UNIQUE (user_id, business_id)
 );
 
--- keep only one row per user/business pair before adding unique index
-DELETE FROM saved_businesses a
-USING saved_businesses b
-WHERE a.id < b.id
-  AND a.user_id = b.user_id
-  AND a.business_id = b.business_id;
-
-CREATE UNIQUE INDEX IF NOT EXISTS saved_businesses_user_business_idx
-ON saved_businesses (user_id, business_id);
+CREATE TABLE IF NOT EXISTS ratings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    UNIQUE (user_id, business_id)
+);
