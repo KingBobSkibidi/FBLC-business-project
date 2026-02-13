@@ -116,6 +116,7 @@ button:hover {
 
 .card-body {
     flex: 1 1 70%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -139,6 +140,8 @@ button:hover {
     line-height: 1.5;
     max-height: 3em; /* 3 * fontsize */
     overflow: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .card-save {
@@ -148,4 +151,23 @@ button:hover {
     margin: 0;
     font-size: 14px;
     padding: 6px 10px;
+}
+
+.details-view {
+    max-width: 1600px;
+}
+
+.details-view .card {
+    width: min(1100px, 100%);
+    margin: 0 auto;
+    align-items: flex-start;
+}
+
+.details-view .card-body {
+    padding-right: 0;
+}
+
+.details-view p {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title> Business Details | Locally </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <h1 class="center_text">Business Details</h1>
+
+    <div class="navbar">
+        <a href="{{ url_for('index') }}">Explore</a>
+
+        {% if session.get("user_id") %}
+            <a href="{{ url_for('profile') }}">Profile</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+    </div>
+
+    <main class="page details-view">
+        <section class="card-grid one-column">
+            <div class="card">
+                <div class="card-photo">
+                    Photo
+                </div>
+                <div class="card-body">
+                    <h2 class="card-title">{{ business.name|capitalize }}</h2>
+                    <p><strong>Category:</strong> {{ business.category }}</p>
+                    <p class="card-location">{{ business.location|title }}</p>
+                    <p>{{ business.description }}</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

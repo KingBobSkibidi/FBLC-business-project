@@ -23,6 +23,30 @@
         {% endif %}
     </div>
 
+    <div class="center_text">
+        <form method="GET">
+            <input
+                type="text"
+                name="q"
+                placeholder="Search businesses"
+                value="{{ search_term }}"
+                aria-label="Search businesses"
+            >
+            <br><br>
+            <select name="category" aria-label="Filter by category">
+                <option value="">All categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>
+                        {{ cat }}
+                    </option>
+                {% endfor %}
+            </select>
+            <br><br>
+            <button type="submit">Apply</button>
+            <a href="{{ url_for('index') }}" style="margin-left: 10px;">Clear</a>
+        </form>
+    </div>
+
     <!-- explore page business listings-->
     <main class="page">
         <section class="card-grid">
@@ -45,8 +69,12 @@
                         
                         <div class="card-body">
                             <h2 class="card-title">{{ business.name|capitalize }}</h2>
+                            {% if business.category %}
+                                <p><strong>Category:</strong> {{ business.category }}</p>
+                            {% endif %}
                             <p class="card-location">{{ business.location|title }}</p>
                             <p class="card-description">{{ business.description }}</p>
+                            <p><a href="{{ url_for('business_details', business_id=business.id) }}">View</a></p>
                         </div>
                     </div>
                 {% endfor %}

@@ -5,6 +5,16 @@ from db import get_db_connection
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
 
+BUSINESS_CATEGORIES = [
+    "Restaurant",
+    "Clothing",
+    "Tech",
+    "Automotive",
+    "Health",
+    "Home Service (Repair)",
+    "Other",
+]
+
 #explore page/function
 @app.route("/")
 def index():
@@ -12,8 +22,28 @@ def index():
     conn = get_db_connection()
     cur = conn.cursor()
 
+    category_filter = request.args.get("category", "").strip()
+    search_term = request.args.get("q", "").strip()
+
     #get businesses info
-    cur.execute("SELECT id, name, description, location FROM businesses ORDER BY id DESC")
+    query = "SELECT id, name, category, description, location FROM businesses"
+    params = []
+    conditions = []
+
+    if category_filter:
+        conditions.append("category = %s")
+        params.append(category_filter)
+
+    if search_term:
+        conditions.append("name ILIKE %s")
+        pattern = f"%{search_term}%"
+        params.append(pattern)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY id DESC"
+    cur.execute(query, params)
     businesses = cur.fetchall()
 
     saved_business_ids = []
@@ -25,14 +55,39 @@ def index():
     cur.close()
     conn.close()
 
-    return render_template("index.html", businesses=businesses, saved_business_ids=saved_business_ids)
+    return render_template(
+        "index.html",
+        businesses=businesses,
+        saved_business_ids=saved_business_ids,
+        categories=BUSINESS_CATEGORIES,
+        selected_category=category_filter,
+        search_term=search_term,
+    )
+
+@app.route("/business/<int:business_id>")
+def business_details(business_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT id, name, category, description, location FROM businesses WHERE id = %s",
+        (business_id,),
+    )
+    business = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not business:
+        return "Business not found.", 404
+
+    return render_template("business_details.html", business=business)
 
 @app.route("/save-business/<int:business_id>", methods=["POST"])
 def save_business(business_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    #initialize
     user_id = session["user_id"]
 
     conn = get_db_connection()
@@ -82,7 +137,6 @@ def profile():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    #initialize
     user_id = session["user_id"]
     
     conn = get_db_connection()
@@ -92,14 +146,13 @@ def profile():
     cur.execute("SELECT username, email FROM users WHERE id = %s", (user_id,)) #%s placeholder, avoid sql injection
     user = cur.fetchone() 
 
-    #get user's business if it exists
-    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,)) #%s placeholder, avoid sql injection
+    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
     user_business = cur.fetchone()
 
     #get user's saved businesses
     cur.execute(
         """
-        SELECT b.id, b.name, b.description, b.location
+        SELECT b.id, b.name, b.category, b.description, b.location
         FROM saved_businesses sb
         JOIN businesses b ON b.id = sb.business_id
         WHERE sb.user_id = %s
@@ -121,14 +174,12 @@ def post_business():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    #initialize
     user_id = session["user_id"]
 
     conn = get_db_connection()
     cur = conn.cursor()
 
-    #check if user already has a business
-    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,)) #%s placeholder, avoid sql injection
+    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
     existing = cur.fetchone()
 
     if existing: #if they already have a business
@@ -137,25 +188,21 @@ def post_business():
         return "You have already posted a business. Only one allowed per user."
 
     if request.method == "POST":
-        #get form data
         name = request.form["name"].strip()
         category = request.form["category"].strip()
         description = request.form["description"].strip()
         location = request.form["location"].strip()
 
-        try:
-            # Insert into database
-            cur.execute(
-                "INSERT INTO businesses (owner_id, name, category, description, location) VALUES (%s, %s, %s, %s, %s)", #%s placeholder, avoid sql injection
-                (user_id, name, category, description, location) 
-            )
-            conn.commit()
-
-        except Exception as e:
-            conn.rollback()
+        if category not in BUSINESS_CATEGORIES:
             cur.close()
             conn.close()
-            return "Failed to post business. Please try again later."
+            return "Invalid category selected."
+
+        cur.execute(
+            "INSERT INTO businesses (owner_id, name, category, description, location) VALUES (%s, %s, %s, %s, %s)", #%s placeholder, avoid sql injection
+            (user_id, name, category, description, location),
+        )
+        conn.commit()
 
         #close cursor and database
         cur.close()
@@ -166,7 +213,58 @@ def post_business():
     #if GET request, just show the form
     cur.close()
     conn.close()
-    return render_template("post_business.html")
+    return render_template("post_business.html", categories=BUSINESS_CATEGORIES)
+
+@app.route("/edit-business", methods=["GET", "POST"])
+def edit_business():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
+    business = cur.fetchone()
+
+    if not business:
+        cur.close()
+        conn.close()
+        return redirect(url_for("post_business"))
+
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        category = request.form["category"].strip()
+        description = request.form["description"].strip()
+        location = request.form["location"].strip()
+
+        if category not in BUSINESS_CATEGORIES:
+            cur.close()
+            conn.close()
+            return "Invalid category selected."
+
+        cur.execute(
+            """
+            UPDATE businesses
+            SET name = %s, category = %s, description = %s, location = %s
+            WHERE owner_id = %s
+            """,
+            (name, category, description, location, user_id),
+        )
+        conn.commit()
+
+        cur.close()
+        conn.close()
+        return redirect(url_for("profile"))
+
+    cur.close()
+    conn.close()
+    return render_template(
+        "edit_business.html",
+        business=business,
+        categories=BUSINESS_CATEGORIES,
+    )
 
 #login page/function
 @app.route("/login", methods=["GET", "POST"])
@@ -220,21 +318,25 @@ def register():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        #query
-        try:
-            cur.execute(
-                "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)", #%s placeholder, avoid sql injection
-                (username, email, password_hash)
-            )
-            conn.commit()
+        cur.execute(
+            "SELECT id FROM users WHERE email = %s OR username = %s",
+            (email, username),
+        )
+        existing_user = cur.fetchone()
 
-        except Exception as e: #if failed database rollback and return reason
-            conn.rollback()
-            return "Registration failed. Email may already be in use."
-        
-        finally: #close cursor and database
+        if existing_user:
             cur.close()
             conn.close()
+            return "Registration failed. Email or username already in use."
+
+        cur.execute(
+            "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)", #%s placeholder, avoid sql injection
+            (username, email, password_hash)
+        )
+        conn.commit()
+
+        cur.close()
+        conn.close()
 
         return redirect(url_for("login")) #redirect to login 
 
