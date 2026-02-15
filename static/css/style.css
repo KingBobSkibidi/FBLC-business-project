@@ -82,12 +82,8 @@ button:hover {
 
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 16px;
-}
-
-.card-grid.one-column {
     grid-template-columns: 1fr;
+    gap: 16px;
 }
 
 .card {
@@ -165,11 +161,16 @@ button:hover {
 .details-view .card {
     width: min(1100px, 100%);
     margin: 0 auto;
-    align-items: flex-start;
+    align-items: stretch;
 }
 
 .details-view .card-body {
     padding-right: 0;
+}
+
+.details-view .card-photo {
+    height: auto;
+    align-self: stretch;
 }
 
 .details-view p {

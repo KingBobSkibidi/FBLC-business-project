@@ -63,7 +63,14 @@
                         </div>
 
                         <div class="card-body">
-                            <h2 class="card-title">{{ business.name|title }}</h2>
+                            <h2 class="card-title">
+                                {{ business.name|title }}
+                                {% if business.rating_count > 0 %}
+                                    <span class="card-rating">({{ "%.1f"|format(business.avg_rating) }}/5)</span>
+                                {% else %}
+                                    <span class="card-rating">(Not rated)</span>
+                                {% endif %}
+                            </h2>
                             {% if business.category %}
                                 <p><strong>Category:</strong> {{ business.category }}</p>
                             {% endif %}

@@ -247,11 +247,20 @@ def profile():
     #get user's saved businesses
     cur.execute(
         """
-        SELECT b.id, b.name, b.category, b.description, b.location
-        FROM saved_businesses sb
-        JOIN businesses b ON b.id = sb.business_id
-        WHERE sb.user_id = %s
-        ORDER BY sb.id DESC
+        SELECT
+            b.id,
+            b.name,
+            b.category,
+            b.description,
+            b.location,
+            AVG(r.rating) AS avg_rating,
+            COUNT(r.rating) AS rating_count
+        FROM saved_businesses
+        JOIN businesses b ON b.id = saved_businesses.business_id
+        LEFT JOIN ratings r ON r.business_id = b.id
+        WHERE saved_businesses.user_id = %s
+        GROUP BY saved_businesses.id, b.id, b.name, b.category, b.description, b.location
+        ORDER BY saved_businesses.id DESC
         """,
         (user_id,)
     )
