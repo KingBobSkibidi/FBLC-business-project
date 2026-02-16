@@ -1,30 +1,40 @@
+<!-- explore page template -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title> Explore | Locally </title>
+    <title> Explore | Locally </title> <!-- browser tab name -->
+
+    <!-- load css from flask static folder -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
-    <h1 class="center_text"> Explore </h1>
+    <!-- page heading -->
+    <h1 class="center_text"> Explore </h1> <!-- page heading -->
 
     <!-- navigation bar -->
     <div class="navbar">
         <a href="{{ url_for('index') }}">Explore</a>
 
+        <!-- show profile/logout only if logged in -->
         {% if session.get("user_id") %}
             <a href="{{ url_for('profile') }}">Profile</a>
             <a href="{{ url_for('logout') }}">Logout</a>
         {% else %}
+            <!-- show login/register only if logged out -->
             <a href="{{ url_for('login') }}">Login</a>
             <a href="{{ url_for('register') }}">Register</a>
         {% endif %}
     </div>
 
+    <!-- search, filter and sort -->
     <div class="center_text">
         <form method="GET">
+
+            <!-- search query input -->
             <input
                 type="text"
                 name="q"
@@ -33,6 +43,8 @@
                 aria-label="Search businesses"
             >
             <br><br>
+
+            <!-- category filter dropdown -->
             <select name="category" aria-label="Filter by category">
                 <option value="">All categories</option>
                 {% for cat in categories %}
@@ -42,6 +54,8 @@
                 {% endfor %}
             </select>
             <br><br>
+
+            <!-- sort dropdown -->
             <select name="sort" aria-label="Sort businesses">
                 <option value="" {% if not selected_sort %}selected{% endif %}>Newest</option>
                 <option value="oldest" {% if selected_sort == "oldest" %}selected{% endif %}>Oldest</option>
@@ -49,7 +63,12 @@
                 <option value="rating_low" {% if selected_sort == "rating_low" %}selected{% endif %}>Rating (low to high)</option>
             </select>
             <br><br>
+
+            
+            <!-- submit filter/sort -->
             <button type="submit">Apply</button>
+
+            <!-- reset filter/sort -->
             <a href="{{ url_for('index') }}" style="margin-left: 10px;">Clear</a>
         </form>
     </div>
@@ -60,6 +79,8 @@
             {% if businesses %}
                 {% for business in businesses %}
                     <div class="card">
+
+                        <!-- save/unsave to profile -->
                         {% if business.id in saved_business_ids %}
                             <form method="POST" action="{{ url_for('unsave_business', business_id=business.id) }}">
                                 <button class="card-save" type="submit">Saved</button>
@@ -69,30 +90,34 @@
                                 <button class="card-save" type="submit">Save</button>
                             </form>
                         {% endif %}
-
-                        <div class="card-photo"> <!-- place holder for now, no images yet -->
+                        
+                        <!-- placeholder photo box/business profile picture-->
+                        <div class="card-photo"> 
                             Photo
                         </div>
                         
+                        <!-- business info/card -->
                         <div class="card-body">
                             <h2 class="card-title">
-                                {{ business.name|title }}
+                                {{ business.name|title }} <!-- capitalized business name -->
+
+                                <!-- show rating if it has ratings -->
                                 {% if business.rating_count > 0 %}
                                     <span class="card-rating">({{ "%.1f"|format(business.avg_rating) }}/5)</span>
                                 {% else %}
                                     <span class="card-rating">(Not rated)</span>
                                 {% endif %}
                             </h2>
-                            {% if business.category %}
-                                <p><strong>Category:</strong> {{ business.category }}</p>
-                            {% endif %}
-                            <p class="card-location">{{ business.location|title }}</p>
-                            <p class="card-description">{{ business.description }}</p>
-                            <p><a href="{{ url_for('business_details', business_id=business.id) }}">View</a></p>
+
+                            <p><strong>Category:</strong> {{ business.category }}</p> 
+                            <p class="card-location">{{ business.location|title }}</p> <!-- capitalized location -->
+                            <p class="card-description">{{ business.description }}</p> 
+                            <p><a href="{{ url_for('business_details', business_id=business.id) }}">View</a></p> <!-- detailed business view-->
                         </div>
                     </div>
                 {% endfor %}
             {% else %}
+                <!-- if no businesses/empty page -->
                 <p class="center_text">No businesses</p>
             {% endif %}
         </section>

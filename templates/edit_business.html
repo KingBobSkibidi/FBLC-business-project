@@ -1,23 +1,30 @@
+<!-- edit business page template -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title> Edit Business | Locally </title>
+    <title> Edit Business | Locally </title> <!-- browser tab name -->
+
+    <!-- load css from flask static folder -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
+    <!-- page heading -->
     <h1 class="center_text">Edit Your Business</h1>
 
     <!-- navigation bar -->
     <div class="navbar">
-        <a href="{{ url_for('index') }}"> Explore </a>
+        <a href="{{ url_for('index') }}">Explore</a>
 
+        <!-- show profile/logout only if logged in -->
         {% if session.get("user_id") %}
             <a href="{{ url_for('profile') }}">Profile</a>
             <a href="{{ url_for('logout') }}">Logout</a>
         {% else %}
+            <!-- show login/register only if logged out -->
             <a href="{{ url_for('login') }}">Login</a>
             <a href="{{ url_for('register') }}">Register</a>
         {% endif %}
@@ -25,11 +32,15 @@
 
     <h2 class="center_text">Update Business Information</h2>
 
+    <!-- edit business form -->
     <div class="center_text">
         <form method="POST">
+
+            <!-- business name input (pre-filled) -->
             <label for="name">Name</label>
             <input type="text" name="name" id="name" value="{{ business.name }}" required><br><br>
 
+            <!-- category dropdown (pre-selected) -->
             <label for="category">Category</label>
             <select name="category" id="category" required>
                 {% for category in categories %}
@@ -39,12 +50,15 @@
                 {% endfor %}
             </select><br><br>
 
+            <!-- business description textarea (pre-filled) -->
             <label for="description">Description</label>
             <textarea name="description" id="description" required>{{ business.description }}</textarea><br><br>
 
+            <!-- business location input (pre-filled) -->
             <label for="location">Location</label>
             <input type="text" name="location" id="location" value="{{ business.location }}" required><br><br>
 
+            <!-- submit updates -->
             <button type="submit">Save Changes</button>
         </form>
     </div>

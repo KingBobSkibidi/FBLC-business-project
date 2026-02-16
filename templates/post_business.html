@@ -1,23 +1,30 @@
+<!-- post business page template -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title> Your Business | Locally </title>
+    <title> Your Business | Locally </title> <!-- browser tab name -->
+
+    <!-- load css from flask static folder -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
+    <!-- page heading -->
     <h1 class="center_text">Post Your Business</h1>
 
     <!-- navigation bar -->
     <div class="navbar">
-        <a href="{{ url_for('index') }}"> Explore </a>
+        <a href="{{ url_for('index') }}">Explore</a>
 
+        <!-- show profile/logout only if logged in -->
         {% if session.get("user_id") %}
             <a href="{{ url_for('profile') }}">Profile</a>
             <a href="{{ url_for('logout') }}">Logout</a>
         {% else %}
+            <!-- show login/register only if logged out -->
             <a href="{{ url_for('login') }}">Login</a>
             <a href="{{ url_for('register') }}">Register</a>
         {% endif %}
@@ -25,11 +32,15 @@
 
     <h2 class="center_text">Enter Business Information</h2>
 
+    <!-- post business form -->
     <div class="center_text">
         <form method="POST">
+
+            <!-- business name input -->
             <label for="name">Name</label>
             <input type="text" name="name" id="name" required><br><br>
 
+            <!-- category dropdown -->
             <label for="category">Category</label>
             <select name="category" id="category" required>
                 {% for category in categories %}
@@ -37,12 +48,15 @@
                 {% endfor %}
             </select><br><br>
 
+            <!-- business description textarea -->
             <label for="description">Description</label>
             <textarea name="description" id="description" required></textarea><br><br>
 
+            <!-- business location input -->
             <label for="location">Location</label>
             <input type="text" name="location" id="location" required><br><br>
 
+            <!-- submit business -->
             <button type="submit">Post Business</button>
         </form>
     </div>

@@ -1,56 +1,81 @@
+<!-- business details page template -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title> Business Details | Locally </title>
+    <title> Business Details | Locally </title> <!-- browser tab name -->
+
+    <!-- load css from flask static folder -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
+    <!-- page heading -->
     <h1 class="center_text">Business Details</h1>
 
+    <!-- navigation bar -->
     <div class="navbar">
         <a href="{{ url_for('index') }}">Explore</a>
 
+        <!-- show profile/logout only if logged in -->
         {% if session.get("user_id") %}
             <a href="{{ url_for('profile') }}">Profile</a>
             <a href="{{ url_for('logout') }}">Logout</a>
         {% else %}
+            <!-- show login/register only if logged out -->
             <a href="{{ url_for('login') }}">Login</a>
             <a href="{{ url_for('register') }}">Register</a>
         {% endif %}
     </div>
 
+    <!-- detailed business view -->
     <main class="page details-view">
         <section class="card-grid one-column">
+
+            <!-- placeholder photo box/business profile picture-->
             <div class="card">
                 <div class="card-photo">
                     Photo
                 </div>
+
+                <!-- business details -->
                 <div class="card-body">
-                    <h2 class="card-title">{{ business.name|title }}</h2>
+                    <h2 class="card-title">{{ business.name|title }}</h2> <!-- capitalized business name -->
                     <p><strong>Category:</strong> {{ business.category }}</p>
-                    <p class="card-location">{{ business.location|title }}</p>
+                    <p class="card-location">{{ business.location|title }}</p> <!-- capitalized location -->
+                    
+                    <!-- show rating if it has ratings -->
                     {% if rating_count > 0 %}
                         <p><strong>Rating:</strong> {{ "%.1f"|format(avg_rating) }}/5 ({{ rating_count }} rating{% if rating_count != 1 %}s{% endif %})</p>
                     {% else %}
                         <p><strong>Rating:</strong> Not rated yet</p>
                     {% endif %}
-                    <p>{{ business.description }}</p>
 
+                    <!-- full business description -->
+                    <p>{{ business.description }}</p> 
+
+                    <!-- rating form (only if logged in) -->
                     {% if session.get("user_id") %}
                         <form method="post" action="{{ url_for('rate_business', business_id=business.id) }}">
+                            
+                            <!-- rating dropdown -->
                             <label for="rating"><strong>Your rating:</strong></label>
                             <select id="rating" name="rating" required>
                                 <option value="" disabled {% if not user_rating %}selected{% endif %}>Select</option>
+                                
+                                <!-- rating options 1-5 -->
                                 {% for n in range(1, 6) %}
                                     <option value="{{ n }}" {% if user_rating == n %}selected{% endif %}>{{ n }}</option>
                                 {% endfor %}
                             </select>
+
+                            <!-- submit rating -->
                             <button type="submit">Save rating</button>
                         </form>
                     {% else %}
+                        <!-- prompt login if not logged in -->
                         <p><a href="{{ url_for('login') }}">Log in</a> to rate this business.</p>
                     {% endif %}
                 </div>

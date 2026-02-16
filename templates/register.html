@@ -1,43 +1,58 @@
+<!-- register page template -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title> Register | Locally </title>
+    <title> Register | Locally </title> <!-- browser tab name -->
+
+    <!-- load css from flask static folder -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
+    <!-- page heading -->
     <h1 class="center_text"> Register </h1>
 
     <!-- navigation bar -->
     <div class="navbar">
         <a href="{{ url_for('index') }}">Explore</a>
 
+        <!-- show profile/logout only if logged in -->
         {% if session.get("user_id") %}
             <a href="{{ url_for('profile') }}">Profile</a>
             <a href="{{ url_for('logout') }}">Logout</a>
         {% else %}
+            <!-- show login/register only if logged out -->
             <a href="{{ url_for('login') }}">Login</a>
             <a href="{{ url_for('register') }}">Register</a>
         {% endif %}
     </div>
 
+    <!-- account registration form -->
     <div class="center_text">
         <h1> Create An Account </h1>
-        <form method="POST" autocomplete="off">
+        <form method="POST" autocomplete="off"> <!-- don't autocomplete with past login history -->
+
+            <!-- username input -->
             <label for="username"> Username </label><br>
             <input type="text" name="username" id="username" required><br><br>
 
+            <!-- email input -->
             <label for="email">Email</label><br>
             <input type="email" name="email" id="email" required><br><br>
 
+            <!-- password input -->
             <label for="password"> Password </label><br>
             <input type="password" name="password" id="password" autocomplete="off" required><br><br>
 
+            <!-- submit registration -->
             <button type="submit" style="margin-top: 0;"> Register </button>
         </form>
 
+        
+        <!-- link to login page if user has existing account -->
         <p>
             Already have an account?
             <a href="{{ url_for('login') }}">Login</a>

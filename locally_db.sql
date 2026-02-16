@@ -1,3 +1,6 @@
+-- Locally database setup and seed samples
+
+-- create users table if it does not exist to store accounts and login details
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
@@ -5,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL
 );
 
+
+-- create business table if it does not exist to business profiles and details
 CREATE TABLE IF NOT EXISTS businesses (
     id SERIAL PRIMARY KEY,
     owner_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -15,6 +20,7 @@ CREATE TABLE IF NOT EXISTS businesses (
     verified BOOLEAN DEFAULT FALSE
 );
 
+-- create table if it does not exist for saved businesses of users
 CREATE TABLE IF NOT EXISTS saved_businesses (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -22,6 +28,7 @@ CREATE TABLE IF NOT EXISTS saved_businesses (
     UNIQUE (user_id, business_id)
 );
 
+-- create table if it does not exist for user's ratings
 CREATE TABLE IF NOT EXISTS ratings (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -30,7 +37,7 @@ CREATE TABLE IF NOT EXISTS ratings (
     UNIQUE (user_id, business_id)
 );
 
--- Sample data (safe to re-run; businesses are inserted by unique name)
+-- sample user accounts (safe to re-run without duplicating)
 INSERT INTO users (username, email, password_hash) VALUES
     ('ava', 'ava@example.com', 'scrypt:32768:8:1$XaAwTEC3WJcVrtkA$05670c6891d74ac8f7f1405f10f05fa9cb4b0b14b436cd871d84c2d3d77a23e613e1d85540b6ddc8f613a0253869ae3c3331293c255d29dbd3e9799e16e0c85d'),
     ('ben', 'ben@example.com', 'scrypt:32768:8:1$XaAwTEC3WJcVrtkA$05670c6891d74ac8f7f1405f10f05fa9cb4b0b14b436cd871d84c2d3d77a23e613e1d85540b6ddc8f613a0253869ae3c3331293c255d29dbd3e9799e16e0c85d'),
@@ -44,8 +51,9 @@ INSERT INTO users (username, email, password_hash) VALUES
     ('jules', 'jules@example.com', 'scrypt:32768:8:1$XaAwTEC3WJcVrtkA$05670c6891d74ac8f7f1405f10f05fa9cb4b0b14b436cd871d84c2d3d77a23e613e1d85540b6ddc8f613a0253869ae3c3331293c255d29dbd3e9799e16e0c85d'),
     ('kiran', 'kiran@example.com', 'scrypt:32768:8:1$XaAwTEC3WJcVrtkA$05670c6891d74ac8f7f1405f10f05fa9cb4b0b14b436cd871d84c2d3d77a23e613e1d85540b6ddc8f613a0253869ae3c3331293c255d29dbd3e9799e16e0c85d'),
     ('lana', 'lana@example.com', 'scrypt:32768:8:1$XaAwTEC3WJcVrtkA$05670c6891d74ac8f7f1405f10f05fa9cb4b0b14b436cd871d84c2d3d77a23e613e1d85540b6ddc8f613a0253869ae3c3331293c255d29dbd3e9799e16e0c85d')
-ON CONFLICT DO NOTHING;
+ON CONFLICT DO NOTHING; --if row violates constraint, skip instead of erroring
 
+-- create temporary dataset of sample businesses (safe to re-run without duplicating)
 WITH sample_businesses (owner_id, name, category, description, location, verified) AS (
     VALUES
         (NULL::integer, 'Harbor & Hearth', 'Restaurant', 'Coastal bistro with seasonal plates and a warm, rustic vibe.', 'Seattle, WA', TRUE),
@@ -76,13 +84,17 @@ WITH sample_businesses (owner_id, name, category, description, location, verifie
         (NULL::integer, 'Starlight Pet Grooming', 'Other', 'Full-service grooming, nail trims, and spa packages for pets.', 'Tucson, AZ', TRUE),
         (NULL::integer, 'Crescent Event Rentals', 'Other', 'Event rentals for tents, chairs, lighting, and linens.', 'Nashville, TN', FALSE)
 )
-INSERT INTO businesses (owner_id, name, category, description, location, verified)
+
+-- insert by selecting from temp dataset
+INSERT INTO businesses (owner_id, name, category, description, location, verified) 
 SELECT sb.owner_id, sb.name, sb.category, sb.description, sb.location, sb.verified
 FROM sample_businesses sb
-WHERE NOT EXISTS (
-    SELECT 1 FROM businesses b WHERE b.name = sb.name
+
+WHERE NOT EXISTS ( -- prevent duplicates
+    SELECT 1 FROM businesses b WHERE b.name = sb.name -- select 1 checks for existence (does not fetch data)
 );
 
+-- sample ratings (safe to re-run without duplicating)
 INSERT INTO ratings (user_id, business_id, rating)
 SELECT u.id, b.id, r.rating
 FROM (
@@ -171,6 +183,6 @@ FROM (
         ('ava', 'Crescent Event Rentals', 2),
         ('diego', 'Crescent Event Rentals', 5)
 ) AS r(username, business_name, rating)
-JOIN users u ON u.username = r.username
-JOIN businesses b ON b.name = r.business_name
-ON CONFLICT (user_id, business_id) DO UPDATE SET rating = EXCLUDED.rating;
+JOIN users u ON u.username = r.username -- convert username to user_id
+JOIN businesses b ON b.name = r.business_name -- convert business name to business_id
+ON CONFLICT (user_id, business_id) DO UPDATE SET rating = EXCLUDED.rating; -- if rating from user exists, update to new rating instead of throwing error
