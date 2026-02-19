@@ -44,6 +44,16 @@
             >
             <br><br>
 
+            <!-- location input -->
+            <input
+                type="text"
+                name="location"
+                placeholder="City, Province (e.g., Markham, ON)"
+                value="{{ location_filter }}"
+                aria-label="Filter by location"
+            >
+            <br><br>
+
             <!-- category filter dropdown -->
             <select name="category" aria-label="Filter by category">
                 <option value="">All categories</option>
@@ -110,7 +120,7 @@
                             </h2>
 
                             <p><strong>Category:</strong> {{ business.category }}</p> 
-                            <p class="card-location">{{ business.location|title }}</p> <!-- capitalized location -->
+                            <p class="card-location">{{ business.location }}</p>
                             <p class="card-description">{{ business.description }}</p> 
                             <p><a href="{{ url_for('business_details', business_id=business.id) }}">View</a></p> <!-- detailed business view-->
                         </div>

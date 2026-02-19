@@ -34,6 +34,7 @@ def index():
     category_filter = request.args.get("category", "").strip()
     search_term = request.args.get("q", "").strip()
     sort_by = request.args.get("sort", "").strip()
+    location_filter = request.args.get("location", "").strip()
 
     #fetch businesses info (with ratings)
     query = """
@@ -60,6 +61,12 @@ def index():
     if search_term:
         conditions.append("b.name ILIKE %s")
         pattern = f"%{search_term}%"
+        params.append(pattern)
+
+    # add location filter condition (case-insensitive)
+    if location_filter:
+        conditions.append("b.location ILIKE %s")
+        pattern = f"%{location_filter}%"
         params.append(pattern)
 
     # apply WHERE clause if any conditions exist
@@ -101,6 +108,7 @@ def index():
         categories=BUSINESS_CATEGORIES,
         selected_category=category_filter,
         search_term=search_term,
+        location_filter=location_filter,
         selected_sort=sort_by,
     )
 
@@ -513,7 +521,7 @@ def register():
 
         # insert new user
         cur.execute(
-            "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)", #%s placeholder, avoid sql injection
+            "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)",
             (username, email, password_hash)
         )
         conn.commit()

@@ -56,33 +56,33 @@ ON CONFLICT DO NOTHING; --if row violates constraint, skip instead of erroring
 -- create temporary dataset of sample businesses (safe to re-run without duplicating)
 WITH sample_businesses (owner_id, name, category, description, location, verified) AS (
     VALUES
-        (NULL::integer, 'Harbor & Hearth', 'Restaurant', 'Coastal bistro with seasonal plates and a warm, rustic vibe.', 'Seattle, WA', TRUE),
-        (NULL::integer, 'Sunset Noodle Co.', 'Restaurant', 'Hand-pulled noodles, ramen and pho, open late.', 'Portland, OR', TRUE),
-        (NULL::integer, 'Cedarstone Grill', 'Restaurant', 'Wood-fired grill featuring steaks, seafood, and smoked sides.', 'Denver, CO', FALSE),
+        (NULL::integer, 'Harbor & Hearth', 'Restaurant', 'Coastal bistro with seasonal plates and a warm, rustic vibe.', '123 Harbor Street, Markham, ON', TRUE),
+        (NULL::integer, 'Sunset Noodle Co.', 'Restaurant', 'Hand-pulled noodles, ramen and pho, open late.', '245 Sunset Avenue, Markham, ON', TRUE),
+        (NULL::integer, 'Cedarstone Grill', 'Restaurant', 'Wood-fired grill featuring steaks, seafood, and smoked sides.', '78 Cedarstone Road, Markham, ON', FALSE),
 
-        (NULL::integer, 'Thread & Timber', 'Clothing', 'Outdoor apparel and everyday layers made with sustainable fabrics.', 'Boise, ID', TRUE),
-        (NULL::integer, 'Lumen Loft Boutique', 'Clothing', 'Modern womenswear, accessories, and seasonal capsule drops.', 'Austin, TX', TRUE),
-        (NULL::integer, 'Northline Vintage', 'Clothing', 'Curated vintage finds from the 70s-90s with in-house tailoring.', 'Minneapolis, MN', FALSE),
+        (NULL::integer, 'Thread & Timber', 'Clothing', 'Outdoor apparel and everyday layers made with sustainable fabrics.', '410 Timber Lane, Markham, ON', TRUE),
+        (NULL::integer, 'Lumen Loft Boutique', 'Clothing', 'Modern womenswear, accessories, and seasonal capsule drops.', '95 Lumen Boulevard, Markham, ON', TRUE),
+        (NULL::integer, 'Northline Vintage', 'Clothing', 'Curated vintage finds from the 70s-90s with in-house tailoring.', '312 Northline Avenue, Markham, ON', FALSE),
 
-        (NULL::integer, 'Skyline IT Solutions', 'Tech', 'Managed IT services, network setup, and security for small teams.', 'Chicago, IL', TRUE),
-        (NULL::integer, 'PulseByte Labs', 'Tech', 'Custom web and mobile apps with rapid prototyping and UX design.', 'San Jose, CA', TRUE),
-        (NULL::integer, 'GreenCloud Systems', 'Tech', 'Cloud migration, DevOps automation, and cost optimization.', 'Raleigh, NC', FALSE),
+        (NULL::integer, 'Skyline IT Solutions', 'Tech', 'Managed IT services, network setup, and security for small teams.', '560 Skyline Drive, Markham, ON', TRUE),
+        (NULL::integer, 'PulseByte Labs', 'Tech', 'Custom web and mobile apps with rapid prototyping and UX design.', '27 PulseByte Crescent, Markham, ON', TRUE),
+        (NULL::integer, 'GreenCloud Systems', 'Tech', 'Cloud migration, DevOps automation, and cost optimization.', '830 GreenCloud Way, Markham, ON', FALSE),
 
-        (NULL::integer, 'Maple Street Auto', 'Automotive', 'Friendly neighborhood shop for maintenance, brakes, and diagnostics.', 'Columbus, OH', TRUE),
-        (NULL::integer, 'Blue Ridge Detailing', 'Automotive', 'Premium detailing with ceramic coatings and interior restoration.', 'Asheville, NC', TRUE),
-        (NULL::integer, 'Riverside Tire & Brake', 'Automotive', 'Tire sales, alignments, and brake service with quick turnaround.', 'Sacramento, CA', FALSE),
+        (NULL::integer, 'Maple Street Auto', 'Automotive', 'Friendly neighborhood shop for maintenance, brakes, and diagnostics.', '14 Maple Street, Markham, ON', TRUE),
+        (NULL::integer, 'Blue Ridge Detailing', 'Automotive', 'Premium detailing with ceramic coatings and interior restoration.', '220 Blue Ridge Road, Markham, ON', TRUE),
+        (NULL::integer, 'Riverside Tire & Brake', 'Automotive', 'Tire sales, alignments, and brake service with quick turnaround.', '642 Riverside Drive, Markham, ON', FALSE),
 
-        (NULL::integer, 'Everwell Family Clinic', 'Health', 'Primary care focused on preventive medicine and same-week visits.', 'Omaha, NE', TRUE),
-        (NULL::integer, 'Clearview Dental Studio', 'Health', 'Comprehensive dental care with cosmetic and restorative services.', 'Tampa, FL', TRUE),
-        (NULL::integer, 'Harborview Physical Therapy', 'Health', 'Sports rehab and mobility-focused therapy programs.', 'Boston, MA', FALSE),
+        (NULL::integer, 'Everwell Family Clinic', 'Health', 'Primary care focused on preventive medicine and same-week visits.', '88 Everwell Street, Markham, ON', TRUE),
+        (NULL::integer, 'Clearview Dental Studio', 'Health', 'Comprehensive dental care with cosmetic and restorative services.', '501 Clearview Terrace, Markham, ON', TRUE),
+        (NULL::integer, 'Harborview Physical Therapy', 'Health', 'Sports rehab and mobility-focused therapy programs.', '36 Harborview Place, Markham, ON', FALSE),
 
-        (NULL::integer, 'BrightPipe Plumbing', 'Home Service (Repair)', 'Emergency plumbing, leak repair, and water heater installs.', 'Phoenix, AZ', TRUE),
-        (NULL::integer, 'Summit Electric Co.', 'Home Service (Repair)', 'Residential electrical repairs, panel upgrades, and lighting.', 'Salt Lake City, UT', TRUE),
-        (NULL::integer, 'Oak & Iron Handyman', 'Home Service (Repair)', 'Carpentry, drywall repair, and punch-list home fixes.', 'Pittsburgh, PA', FALSE),
+        (NULL::integer, 'BrightPipe Plumbing', 'Home Service (Repair)', 'Emergency plumbing, leak repair, and water heater installs.', '205 BrightPipe Road, Markham, ON', TRUE),
+        (NULL::integer, 'Summit Electric Co.', 'Home Service (Repair)', 'Residential electrical repairs, panel upgrades, and lighting.', '900 Summit Parkway, Markham, ON', TRUE),
+        (NULL::integer, 'Oak & Iron Handyman', 'Home Service (Repair)', 'Carpentry, drywall repair, and punch-list home fixes.', '77 Oak Iron Court, Markham, ON', FALSE),
 
-        (NULL::integer, 'Beacon Bookshop', 'Other', 'Independent bookstore with author events and local zines.', 'Richmond, VA', TRUE),
-        (NULL::integer, 'Starlight Pet Grooming', 'Other', 'Full-service grooming, nail trims, and spa packages for pets.', 'Tucson, AZ', TRUE),
-        (NULL::integer, 'Crescent Event Rentals', 'Other', 'Event rentals for tents, chairs, lighting, and linens.', 'Nashville, TN', FALSE)
+        (NULL::integer, 'Beacon Bookshop', 'Other', 'Independent bookstore with author events and local zines.', '16 Beacon Street, Markham, ON', TRUE),
+        (NULL::integer, 'Starlight Pet Grooming', 'Other', 'Full-service grooming, nail trims, and spa packages for pets.', '303 Starlight Avenue, Markham, ON', TRUE),
+        (NULL::integer, 'Crescent Event Rentals', 'Other', 'Event rentals for tents, chairs, lighting, and linens.', '411 Crescent Circle, Markham, ON', FALSE)
 )
 
 -- insert by selecting from temp dataset

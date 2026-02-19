@@ -44,7 +44,7 @@
                 <div class="card-body">
                     <h2 class="card-title">{{ business.name|title }}</h2> <!-- capitalized business name -->
                     <p><strong>Category:</strong> {{ business.category }}</p>
-                    <p class="card-location">{{ business.location|title }}</p> <!-- capitalized location -->
+                    <p class="card-location">{{ business.location }}</p>
                     
                     <!-- show rating if it has ratings -->
                     {% if rating_count > 0 %}
