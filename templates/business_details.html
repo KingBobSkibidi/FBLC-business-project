@@ -56,6 +56,17 @@
                     <!-- full business description -->
                     <p>{{ business.description }}</p> 
 
+                    <!-- save/unsave button -->
+                    {% if is_saved %}
+                        <form method="POST" action="{{ url_for('unsave_business', business_id=business.id) }}">
+                            <button class="card-save" type="submit">Saved</button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('save_business', business_id=business.id) }}">
+                            <button class="card-save" type="submit">Save</button>
+                        </form>
+                    {% endif %}
+
                     <!-- rating form (only if logged in) -->
                     {% if session.get("user_id") %}
                         <form method="post" action="{{ url_for('rate_business', business_id=business.id) }}">

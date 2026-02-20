@@ -144,8 +144,9 @@ def business_details(business_id):
     )
     rating_stats = cur.fetchone()
 
-    # fetch user's rating (if any)
+    # fetch user's rating (if any) 
     user_rating = None
+    is_saved = False
     if "user_id" in session:
         cur.execute(
             """
@@ -158,6 +159,17 @@ def business_details(business_id):
         user_row = cur.fetchone()
         if user_row:
             user_rating = user_row["rating"]
+    
+        # fetch user's saved status
+        cur.execute(
+            """
+            SELECT 1
+            FROM saved_businesses
+            WHERE user_id = %s AND business_id = %s
+            """,
+            (session["user_id"], business_id),
+        )
+        is_saved = cur.fetchone() is not None
 
     # close database
     cur.close()
@@ -170,6 +182,7 @@ def business_details(business_id):
         avg_rating=rating_stats["avg_rating"],
         rating_count=rating_stats["rating_count"],
         user_rating=user_rating,
+        is_saved=is_saved,
     )
 
 # handle rating submission

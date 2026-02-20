@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL
 );
 
-
 -- create business table if it does not exist to business profiles and details
 CREATE TABLE IF NOT EXISTS businesses (
     id SERIAL PRIMARY KEY,
