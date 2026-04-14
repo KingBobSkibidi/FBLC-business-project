@@ -19,6 +19,7 @@ DB_CONFIG = {
 
 _schema_init_lock = Lock()
 _schema_initialized = False
+_required_tables = ("users", "businesses", "saved_businesses", "ratings")
 
 
 def _connect_from_env():
@@ -69,19 +70,20 @@ def _initialize_schema_if_needed(conn):
             return
 
         with conn.cursor() as cur:
-            cur.execute("SELECT to_regclass('public.users') AS users_table")
-            exists = cur.fetchone()["users_table"] is not None
-            if exists:
-                _schema_initialized = True
-                return
+            all_tables_exist = True
+            for table_name in _required_tables:
+                cur.execute("SELECT to_regclass(%s) AS table_name", (f"public.{table_name}",))
+                row = cur.fetchone()
+                if row["table_name"] is None:
+                    all_tables_exist = False
+                    break
 
-            schema_path = Path(__file__).resolve().parent / "locally_db.sql"
-            sql_script = schema_path.read_text(encoding="utf-8")
-            for statement in sql_script.split(";"):
-                statement = statement.strip()
-                if statement:
-                    cur.execute(statement)
-            conn.commit()
+            if not all_tables_exist:
+                schema_path = Path(__file__).resolve().parent / "locally_db.sql"
+                sql_script = schema_path.read_text(encoding="utf-8")
+                cur.execute(sql_script)
+                conn.commit()
+
             _schema_initialized = True
 
 
