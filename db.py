@@ -2,7 +2,6 @@
 
 # imports statements
 import os
-from pathlib import Path
 from threading import Lock
 
 from psycopg.rows import dict_row
@@ -103,14 +102,51 @@ def _initialize_schema_if_needed(conn):
         if _schema_initialized:
             return
 
-        schema_path = Path(__file__).resolve().parent / "locally_db.sql"
-        sql_script = schema_path.read_text(encoding="utf-8")
-
         with conn.cursor() as cur:
-            for statement in sql_script.split(";"):
-                statement = statement.strip()
-                if statement:
-                    cur.execute(statement)
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT UNIQUE NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL
+                )
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS businesses (
+                    id SERIAL PRIMARY KEY,
+                    owner_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                    name TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    location TEXT NOT NULL,
+                    verified BOOLEAN DEFAULT FALSE
+                )
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS saved_businesses (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+                    UNIQUE (user_id, business_id)
+                )
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS ratings (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+                    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+                    UNIQUE (user_id, business_id)
+                )
+                """
+            )
         conn.commit()
         _schema_initialized = True
 
