@@ -1,15 +1,22 @@
 # main flask app for Locally (routes, db queries and login sessions)
 
 #import statements
+import os
+
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from db import get_db_connection
+from db import DatabaseConfigurationError, DatabaseConnectionError, get_db_connection
 
 # create flask app instance
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public/static", static_url_path="/static")
 
-# session signing key (used to protect cookies)
-app.secret_key = "dev-secret-key"
+# session and cookie settings
+app.config.update(
+    SECRET_KEY=os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY") or "dev-secret-key",
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(os.getenv("VERCEL")),
+)
 
 # list of business categories
 BUSINESS_CATEGORIES = [
@@ -21,6 +28,17 @@ BUSINESS_CATEGORIES = [
     "Home Service (Repair)",
     "Other",
 ]
+
+
+@app.errorhandler(DatabaseConfigurationError)
+@app.errorhandler(DatabaseConnectionError)
+def handle_database_error(error):
+    app.logger.exception("Database error: %s", error)
+    return (
+        "Database setup is incomplete. Configure DATABASE_URL or Vercel Postgres, "
+        "then redeploy.",
+        500,
+    )
 
 #explore/index page
 @app.route("/")
@@ -551,4 +569,4 @@ def register():
 
 # run local dev server
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=os.getenv("FLASK_DEBUG") == "1")
