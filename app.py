@@ -3,7 +3,7 @@
 #import statements
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from db import get_db_connection
+from db import DatabaseConnectionError, get_db_connection
 
 # create flask app instance
 app = Flask(__name__)
@@ -21,6 +21,11 @@ BUSINESS_CATEGORIES = [
     "Home Service (Repair)",
     "Other",
 ]
+
+
+@app.errorhandler(DatabaseConnectionError)
+def handle_database_connection_error(error):
+    return str(error), 500
 
 #explore/index page
 @app.route("/")
