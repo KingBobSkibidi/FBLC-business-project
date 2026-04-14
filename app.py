@@ -549,7 +549,3 @@ def register():
 
     #render register page
     return render_template("register.html") 
-
-# run local dev server
-if __name__ == "__main__":
-    app.run(debug=True)
