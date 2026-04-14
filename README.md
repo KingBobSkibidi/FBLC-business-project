@@ -1,67 +1,40 @@
-# FBLC Business Project
+# FBLC Business Project (Locally)
+A simple Flask + PostgreSQL app for exploring local businesses. Users can register/login, post their business, filter/search, save, and rate businesses.
 
-A simple Flask + PostgreSQL app for exploring local businesses. Users can register, log in, post a business, save listings, and rate businesses.
-
-## Features
-
-- Explore listings with search, category filters, location filters, and sorting
-- Business detail pages with ratings
-- Save and unsave businesses
-- Post and edit your own business
+**Features**
+- Explore listings with search, category filter, and sort
+- Business detail pages with ratings, and description
+- Save/unsave businesses
+- Post and edit your own business (1 per user)
 - Basic account system
 
-## Tech
-
+**Tech**
 - Python / Flask
-- PostgreSQL via `psycopg`
+- PostgreSQL (psycopg)
 - HTML + Jinja templates + CSS
 
-## Local setup
-
+**Setup**
 1. Create a PostgreSQL database named `locally`.
-2. Set environment variables for your local database.
-3. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
+2. Install dependencies:
+   ```bash
+   pip install flask psycopg[binary] werkzeug
+   ```
+3. Create tables + seed data:
+   - Open `locally_db.sql` in pgAdmin → Query Tool → Execute
 4. Run the app:
-
-```bash
-python app.py
-```
-
+   ```bash
+   python app.py
+   ```
 5. Visit `http://127.0.0.1:5000`
 
-The app automatically creates tables on first run using `locally_db.sql`. If you want demo data, leave that file as-is.
+**Seeding Notes**
+- `locally_db.sql` includes sample users, businesses, and ratings.
 
-## Vercel setup
-
-Vercel can deploy this Flask app directly from `app.py`.
-
-Required environment variables:
-
-- `SECRET_KEY`
-- `DATABASE_URL` or Vercel Postgres env vars such as `POSTGRES_URL`
-
-Recommended deployment steps:
-
-1. Import the repo into Vercel.
-2. Add a hosted Postgres database.
-3. Add `SECRET_KEY` in the Vercel project settings.
-4. Deploy.
-
-On first request, the app creates any missing tables automatically. Static assets are served from `public/static` for Vercel compatibility.
-
-## Project structure
-
+**Project Structure**
 - `app.py` Flask backend
-- `db.py` database connection and bootstrap logic
-- `locally_db.sql` schema and sample data
+- `db.py` DB connection
 - `templates/` HTML pages
-- `public/static/` CSS for Vercel and local development
+- `static/` CSS
 
-## License
-
+**License**
 MIT

@@ -18,13 +18,13 @@ body {
 
 /* text and links line height */
 a, p {
-    line-height: 150%;
+    line-height: 150%;    
 }
 
 /* class to center text and spacing */
 .center_text {
-    margin: 15px;
-    text-align: center;
+    margin: 15px;  
+    text-align: center; 
 }
 
 /* consistent styling for input fields, dropdowns, and text areas */
@@ -48,12 +48,12 @@ textarea {
     border: 2px solid black;
 
     /* turns navbar into responsive flexbox*/
-    display: flex;
+    display: flex; 
     flex-wrap: wrap;
     align-items: center;
 
     /* sticks to top when scrolling*/
-    position: sticky;
+    position:sticky; 
     top: 0;
     z-index: 1000;
 
@@ -162,7 +162,7 @@ button:hover {
 .card-description {
     margin: 0;
     line-height: 1.5;
-    max-height: 3em;
+    max-height: 3em; /* 3*fontsize */
     overflow: hidden;
     overflow-wrap: anywhere;
     word-break: break-word;

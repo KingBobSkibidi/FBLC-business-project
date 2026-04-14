@@ -19,11 +19,6 @@ CREATE TABLE IF NOT EXISTS businesses (
     verified BOOLEAN DEFAULT FALSE
 );
 
--- normalize older category values so filtering and forms stay consistent
-UPDATE businesses
-SET category = 'Technology'
-WHERE category = 'Tech';
-
 -- create table if it does not exist for saved businesses of users
 CREATE TABLE IF NOT EXISTS saved_businesses (
     id SERIAL PRIMARY KEY,
@@ -68,9 +63,9 @@ WITH sample_businesses (owner_id, name, category, description, location, verifie
         (NULL::integer, 'Lumen Loft Boutique', 'Clothing', 'Modern womenswear, accessories, and seasonal capsule drops.', '95 Lumen Boulevard, Markham, ON', TRUE),
         (NULL::integer, 'Northline Vintage', 'Clothing', 'Curated vintage finds from the 70s-90s with in-house tailoring.', '312 Northline Avenue, Markham, ON', FALSE),
 
-        (NULL::integer, 'Skyline IT Solutions', 'Technology', 'Managed IT services, network setup, and security for small teams.', '560 Skyline Drive, Markham, ON', TRUE),
-        (NULL::integer, 'PulseByte Labs', 'Technology', 'Custom web and mobile apps with rapid prototyping and UX design.', '27 PulseByte Crescent, Markham, ON', TRUE),
-        (NULL::integer, 'GreenCloud Systems', 'Technology', 'Cloud migration, DevOps automation, and cost optimization.', '830 GreenCloud Way, Markham, ON', FALSE),
+        (NULL::integer, 'Skyline IT Solutions', 'Tech', 'Managed IT services, network setup, and security for small teams.', '560 Skyline Drive, Markham, ON', TRUE),
+        (NULL::integer, 'PulseByte Labs', 'Tech', 'Custom web and mobile apps with rapid prototyping and UX design.', '27 PulseByte Crescent, Markham, ON', TRUE),
+        (NULL::integer, 'GreenCloud Systems', 'Tech', 'Cloud migration, DevOps automation, and cost optimization.', '830 GreenCloud Way, Markham, ON', FALSE),
 
         (NULL::integer, 'Maple Street Auto', 'Automotive', 'Friendly neighborhood shop for maintenance, brakes, and diagnostics.', '14 Maple Street, Markham, ON', TRUE),
         (NULL::integer, 'Blue Ridge Detailing', 'Automotive', 'Premium detailing with ceramic coatings and interior restoration.', '220 Blue Ridge Road, Markham, ON', TRUE),
