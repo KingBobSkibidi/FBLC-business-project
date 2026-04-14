@@ -30,6 +30,7 @@ def _connect():
         os.getenv("DATABASE_URL")
         or os.getenv("POSTGRES_URL")
         or os.getenv("POSTGRES_URL_NON_POOLING")
+        or os.getenv("POSTGRES_PRISMA_URL")
     )
 
     if database_url:
@@ -50,6 +51,24 @@ def _connect():
             ) from error
 
     # Support providers that expose host/user/password vars instead of a single URL.
+    if os.getenv("PGHOST") and os.getenv("PGUSER"):
+        try:
+            return psycopg.connect(
+                dbname=os.getenv("PGDATABASE", "postgres"),
+                user=os.getenv("PGUSER"),
+                password=os.getenv("PGPASSWORD"),
+                host=os.getenv("PGHOST"),
+                port=int(os.getenv("PGPORT", "5432")),
+                sslmode=os.getenv("PGSSLMODE", "require"),
+                prepare_threshold=None,
+                row_factory=dict_row,
+            )
+        except psycopg.Error as error:
+            raise DatabaseConnectionError(
+                "Could not connect to PostgreSQL using PGHOST/PGUSER variables."
+            ) from error
+
+    # Support providers that expose POSTGRES_* host/user/password vars.
     if os.getenv("POSTGRES_HOST") and os.getenv("POSTGRES_USER"):
         try:
             return psycopg.connect(
