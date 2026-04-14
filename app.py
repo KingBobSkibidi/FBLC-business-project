@@ -4,12 +4,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db_connection
+import os
 
 # create flask app instance
 app = Flask(__name__)
 
 # session signing key (used to protect cookies)
-app.secret_key = "dev-secret-key"
+app.secret_key = os.getenv("SECRET_KEY", "dev-only-change-me")
 
 # list of business categories
 BUSINESS_CATEGORIES = [

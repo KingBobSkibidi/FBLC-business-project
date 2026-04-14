@@ -1,19 +1,21 @@
 # handles database connection for Locally 
 
 # imports statements
+import os
 from psycopg.rows import dict_row
 import psycopg
 
-# database connection settings
-DB_CONFIG = {
-    "dbname": "locally",
-    "user": "postgres",
-    "password": "Bai12345!", 
-    "host": "localhost",
-    "port": 5432
-}
-
 # create and return database connection
 def get_db_connection():
-    conn = psycopg.connect(**DB_CONFIG, row_factory=dict_row) # connect to PostgreSQL, create database and format rows as dictionary
-    return conn
+    db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+    if db_url:
+        return psycopg.connect(db_url, row_factory=dict_row)
+
+    return psycopg.connect(
+        dbname=os.getenv("PGDATABASE", "locally"),
+        user=os.getenv("PGUSER", "postgres"),
+        password=os.getenv("PGPASSWORD", ""),
+        host=os.getenv("PGHOST", "localhost"),
+        port=int(os.getenv("PGPORT", "5432")),
+        row_factory=dict_row,
+    )
