@@ -1,70 +1,61 @@
-/* styling and layout for html files/front end */
-
-/* global defaults for entire site */
 * {
-    background-color: #f7f7f7;
-    color: #222;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: Arial, Helvetica, sans-serif;
 }
 
-/* base/body font size and spacing */
 body {
+    background-color: #f7f7f7;
+    color: #222;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 18px;
     padding: 20px;
 }
 
-/* text and links line height */
+a {
+    color: inherit;
+}
+
 a, p {
-    line-height: 150%;    
+    line-height: 1.5;
 }
 
-/* class to center text and spacing */
 .center_text {
-    margin: 15px;  
-    text-align: center; 
+    margin: 15px;
+    text-align: center;
 }
 
-/* consistent styling for input fields, dropdowns, and text areas */
 input, textarea, select {
     border: 2px solid black;
     padding: 8px;
     border-radius: 8px;
+    font-family: inherit;
     font-size: 16px;
     background-color: #fff;
     width: min(520px, 100%);
 }
 
-/* text area (business description) mininum height and resizing */
 textarea {
     min-height: 120px;
     resize: vertical;
 }
 
-/* navigation bar layout and styling */
+/* sticky, so it needs its own background */
 .navbar {
+    background-color: #f7f7f7;
     border: 2px solid black;
-
-    /* turns navbar into responsive flexbox*/
-    display: flex; 
+    display: flex;
     flex-wrap: wrap;
     align-items: center;
-
-    /* sticks to top when scrolling*/
-    position:sticky; 
+    justify-content: space-evenly;
+    position: sticky;
     top: 0;
     z-index: 1000;
-
-    /* spacing */
-    justify-content: space-evenly;
     padding: 10px 30px;
     margin-bottom: 30px;
     gap: 10px;
 }
 
-/* navbar link styling and hover animation*/
 .navbar a {
     text-decoration: none;
     padding: 10px 20px 10px 0;
@@ -75,10 +66,10 @@ textarea {
     transform: scale(1.01);
 }
 
-/* button styling and hover animation  */
 button {
     background-color: #fafafa;
     color: black;
+    font-family: inherit;
     padding: 8px;
     margin: 10px 0;
     border: 2px solid black;
@@ -92,25 +83,20 @@ button:hover {
     transform: scale(1.01);
 }
 
-/* page layout */
 .page {
     max-width: 1000px;
     margin: 0 auto;
 }
 
-/* responsive grid layout for business cards. */
 .card-grid {
     display: grid;
-    grid-template-columns: 1fr;
     gap: 16px;
 }
 
-/* individual business cards styling and flex layout */
 .card {
     border: 2px solid black;
     background-color: #fafafa;
     display: flex;
-    flex-direction: row;
     align-items: center;
     gap: 16px;
     padding: 16px;
@@ -119,11 +105,9 @@ button:hover {
     position: relative;
 }
 
-/* photo in each business card styling */
 .card-photo {
-    width: 30%;
-    height: 150px;
     flex: 0 0 30%;
+    height: 150px;
     border: 2px solid black;
     display: flex;
     align-items: center;
@@ -131,15 +115,14 @@ button:hover {
     font-weight: bold;
 }
 
-/* text in each business card styling */
 .card-body {
-    flex: 1 1 70%;
+    flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
     margin-left: 10px;
-    padding-right: 76px;
+    padding-right: 76px; /* clears the absolute save button */
 }
 
 .card-title {
@@ -153,22 +136,17 @@ button:hover {
 }
 
 .card-location {
-    margin: 0;
     font-weight: bold;
     text-transform: capitalize;
 }
 
-/* description/textarea in each business card layout */
 .card-description {
-    margin: 0;
     line-height: 1.5;
-    max-height: 3em; /* 3*fontsize */
+    max-height: 3em;
     overflow: hidden;
     overflow-wrap: anywhere;
-    word-break: break-word;
 }
 
-/* position save button in the top-right corner of business card */
 .card-save {
     position: absolute;
     top: 16px;
@@ -178,7 +156,6 @@ button:hover {
     padding: 6px 10px;
 }
 
-/* styling and layout for detailed card view */
 .details-view {
     max-width: 1600px;
 }
@@ -200,5 +177,4 @@ button:hover {
 
 .details-view p {
     overflow-wrap: anywhere;
-    word-break: break-word;
 }

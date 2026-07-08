@@ -1,18 +1,17 @@
-# main flask app for Locally (routes, db queries and login sessions)
+# Locally: Flask app for exploring, posting, saving, and rating local businesses.
+import os
+from functools import wraps
 
-#import statements
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from db import get_db_connection
-import os
 
-# create flask app instance
 app = Flask(__name__)
+# random fallback keeps dev sessions unforgeable; set SECRET_KEY in production
+app.secret_key = os.getenv("SECRET_KEY") or os.urandom(32)
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
 
-# session signing key (used to protect cookies)
-app.secret_key = os.getenv("SECRET_KEY", "dev-only-change-me")
-
-# list of business categories
 BUSINESS_CATEGORIES = [
     "Restaurant",
     "Clothing",
@@ -23,529 +22,289 @@ BUSINESS_CATEGORIES = [
     "Other",
 ]
 
-#explore/index page
+# whitelist of ORDER BY clauses; user input never reaches the SQL string
+SORT_ORDERS = {
+    "rating": "avg_rating DESC NULLS LAST, rating_count DESC, b.id DESC",
+    "rating_low": "avg_rating ASC NULLS FIRST, rating_count DESC, b.id DESC",
+    "oldest": "b.id ASC",
+}
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapper
+
+
+def safe_referrer():
+    # only redirect back to our own pages, never an external URL
+    ref = request.referrer
+    return ref if ref and ref.startswith(request.host_url) else url_for("index")
+
+
+def business_form_fields():
+    """Validate the post/edit business form. Returns (fields, error_response)."""
+    fields = {k: request.form.get(k, "").strip()
+              for k in ("name", "category", "description", "location")}
+    if not all(fields.values()):
+        return None, ("All fields are required.", 400)
+    if fields["category"] not in BUSINESS_CATEGORIES:
+        return None, ("Invalid category selected.", 400)
+    return fields, None
+
+
 @app.route("/")
 def index():
-
-    # connect to database
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # fetch filter values from url query parameters
-    category_filter = request.args.get("category", "").strip()
-    search_term = request.args.get("q", "").strip()
+    category = request.args.get("category", "").strip()
+    search = request.args.get("q", "").strip()
+    location = request.args.get("location", "").strip()
     sort_by = request.args.get("sort", "").strip()
-    location_filter = request.args.get("location", "").strip()
 
-    #fetch businesses info (with ratings)
+    conditions, params = [], []
+    if category:
+        conditions.append("b.category = %s")
+        params.append(category)
+    if search:
+        conditions.append("b.name ILIKE %s")
+        params.append(f"%{search}%")
+    if location:
+        conditions.append("b.location ILIKE %s")
+        params.append(f"%{location}%")
+
     query = """
-        SELECT
-            b.id,
-            b.name,
-            b.category,
-            b.description,
-            b.location,
-            AVG(r.rating) AS avg_rating,
-            COUNT(r.rating) AS rating_count
+        SELECT b.id, b.name, b.category, b.description, b.location,
+               AVG(r.rating) AS avg_rating, COUNT(r.rating) AS rating_count
         FROM businesses b
         LEFT JOIN ratings r ON r.business_id = b.id
     """
-    params = []
-    conditions = []
-
-    # add category filter condition
-    if category_filter:
-        conditions.append("b.category = %s")
-        params.append(category_filter)
-
-    # add search filter condition (case-insensitive)
-    if search_term:
-        conditions.append("b.name ILIKE %s")
-        pattern = f"%{search_term}%"
-        params.append(pattern)
-
-    # add location filter condition (case-insensitive)
-    if location_filter:
-        conditions.append("b.location ILIKE %s")
-        pattern = f"%{location_filter}%"
-        params.append(pattern)
-
-    # apply WHERE clause if any conditions exist
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
+    query += " GROUP BY b.id ORDER BY " + SORT_ORDERS.get(sort_by, "b.id DESC")
 
-    # choose sort order
-    order_clause = "b.id DESC"
-    if sort_by == "rating":
-        order_clause = "avg_rating DESC NULLS LAST, rating_count DESC, b.id DESC"
-    elif sort_by == "rating_low":
-        order_clause = "avg_rating ASC NULLS FIRST, rating_count DESC, b.id DESC"
-    elif sort_by == "oldest":
-        order_clause = "b.id ASC"
+    saved_ids = []
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute(query, params)
+        businesses = cur.fetchall()
+        if "user_id" in session:
+            cur.execute("SELECT business_id FROM saved_businesses WHERE user_id = %s",
+                        (session["user_id"],))
+            saved_ids = [row["business_id"] for row in cur.fetchall()]
 
-    # finish query with GROUP BY + ORDER BY
-    query += f"""
-        GROUP BY b.id, b.name, b.category, b.description, b.location
-        ORDER BY {order_clause}
-    """
-    cur.execute(query, params)
-    businesses = cur.fetchall()
-
-    # fetch saved business ids for user (for save button)
-    saved_business_ids = []
-    if "user_id" in session:
-        cur.execute("SELECT business_id FROM saved_businesses WHERE user_id = %s", (session["user_id"],))
-        saved_business_ids = [row["business_id"] for row in cur.fetchall()]
-    
-    # close database
-    cur.close()
-    conn.close()
-
-    # render explore page template
     return render_template(
         "index.html",
         businesses=businesses,
-        saved_business_ids=saved_business_ids,
+        saved_business_ids=saved_ids,
         categories=BUSINESS_CATEGORIES,
-        selected_category=category_filter,
-        search_term=search_term,
-        location_filter=location_filter,
+        selected_category=category,
+        search_term=search,
+        location_filter=location,
         selected_sort=sort_by,
     )
 
-# business details page
+
 @app.route("/business/<int:business_id>")
 def business_details(business_id):
+    user_id = session.get("user_id")
+    user_rating, is_saved = None, False
 
-    # connect to database
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    # fetch business info by id
-    cur.execute(
-        "SELECT id, name, category, description, location FROM businesses WHERE id = %s",
-        (business_id,),
-    )
-    business = cur.fetchone()
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT id, name, category, description, location FROM businesses WHERE id = %s",
+                    (business_id,))
+        business = cur.fetchone()
+        if not business:
+            return "Business not found.", 404
 
-    # return 404 if business does not exist
-    if not business:
-        cur.close()
-        conn.close()
-        return "Business not found.", 404
+        cur.execute("SELECT AVG(rating) AS avg_rating, COUNT(*) AS rating_count FROM ratings WHERE business_id = %s",
+                    (business_id,))
+        stats = cur.fetchone()
 
-    # fetch ratings for the business
-    cur.execute(
-        """
-        SELECT AVG(rating) AS avg_rating, COUNT(*) AS rating_count
-        FROM ratings
-        WHERE business_id = %s
-        """,
-        (business_id,),
-    )
-    rating_stats = cur.fetchone()
+        if user_id:
+            cur.execute("SELECT rating FROM ratings WHERE user_id = %s AND business_id = %s",
+                        (user_id, business_id))
+            row = cur.fetchone()
+            user_rating = row["rating"] if row else None
+            cur.execute("SELECT 1 FROM saved_businesses WHERE user_id = %s AND business_id = %s",
+                        (user_id, business_id))
+            is_saved = cur.fetchone() is not None
 
-    # fetch user's rating (if any) 
-    user_rating = None
-    is_saved = False
-    if "user_id" in session:
-        cur.execute(
-            """
-            SELECT rating
-            FROM ratings
-            WHERE user_id = %s AND business_id = %s
-            """,
-            (session["user_id"], business_id),
-        )
-        user_row = cur.fetchone()
-        if user_row:
-            user_rating = user_row["rating"]
-    
-        # fetch user's saved status
-        cur.execute(
-            """
-            SELECT 1
-            FROM saved_businesses
-            WHERE user_id = %s AND business_id = %s
-            """,
-            (session["user_id"], business_id),
-        )
-        is_saved = cur.fetchone() is not None
-
-    # close database
-    cur.close()
-    conn.close()
-
-    # render business details page template
     return render_template(
         "business_details.html",
         business=business,
-        avg_rating=rating_stats["avg_rating"],
-        rating_count=rating_stats["rating_count"],
+        avg_rating=stats["avg_rating"],
+        rating_count=stats["rating_count"],
         user_rating=user_rating,
         is_saved=is_saved,
     )
 
-# handle rating submission
+
 @app.route("/rate-business/<int:business_id>", methods=["POST"])
+@login_required
 def rate_business(business_id):
-
-    # require login
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    # fetch rating from form
-    rating_value = request.form.get("rating", "").strip()
-    try:
-        rating_value = int(rating_value)
-    except ValueError:
+    rating = request.form.get("rating", "")
+    if rating not in {"1", "2", "3", "4", "5"}:
         return "Invalid rating.", 400
 
-    # validate rating (range 1-5)
-    if rating_value < 1 or rating_value > 5:
-        return "Invalid rating.", 400
-
-    # connect to database
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # confirm business exists
-    cur.execute("SELECT id FROM businesses WHERE id = %s", (business_id,))
-    if not cur.fetchone():
-        cur.close()
-        conn.close()
-        return "Business not found.", 404
-
-    # insert or update rating
-    cur.execute(
-        """
-        INSERT INTO ratings (user_id, business_id, rating)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (user_id, business_id)
-        DO UPDATE SET rating = EXCLUDED.rating
-        """,
-        (session["user_id"], business_id, rating_value),
-    )
-    conn.commit()
-
-    # close database
-    cur.close()
-    conn.close()
-
-    # redirect back to business details
-    return redirect(url_for("business_details", business_id=business_id))
-
-# save business action (button)
-@app.route("/save-business/<int:business_id>", methods=["POST"])
-def save_business(business_id):
-
-    # require login
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    user_id = session["user_id"]
-
-    # connect to database
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # save business if it exists, ignore if already saved
-    cur.execute(
-        """
-        INSERT INTO saved_businesses (user_id, business_id)
-        SELECT %s, id FROM businesses WHERE id = %s
-        ON CONFLICT (user_id, business_id) DO NOTHING
-        """,
-        (user_id, business_id),
-    )
-    conn.commit()
-
-    # close database
-    cur.close()
-    conn.close()
-
-    # redirect back to previous/index page
-    return redirect(request.referrer or url_for("index"))
-
-# unsave business action (button)
-@app.route("/unsave-business/<int:business_id>", methods=["POST"])
-def unsave_business(business_id):
-
-    # require login
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    user_id = session["user_id"]
-
-    # connect to database
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # delete saved business under user
-    cur.execute(
-        "DELETE FROM saved_businesses WHERE user_id = %s AND business_id = %s",
-        (user_id, business_id),
-    )
-    conn.commit()
-
-    # close database
-    cur.close()
-    conn.close()
-
-    # redirect back to previous/index page
-    return redirect(request.referrer or url_for("index"))
-
-#profile page
-@app.route("/profile")
-def profile():
-
-    # require login
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    user_id = session["user_id"]
-    
-    # connect to database
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # fetch user account info
-    cur.execute("SELECT username, email FROM users WHERE id = %s", (user_id,))
-    user = cur.fetchone() 
-
-    # fetch user's posted business
-    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
-    user_business = cur.fetchone()
-
-    # fetch user's saved businesses and rating 
-    cur.execute(
-        """
-        SELECT
-            b.id,
-            b.name,
-            b.category,
-            b.description,
-            b.location,
-            AVG(r.rating) AS avg_rating,
-            COUNT(r.rating) AS rating_count
-        FROM saved_businesses
-        JOIN businesses b ON b.id = saved_businesses.business_id
-        LEFT JOIN ratings r ON r.business_id = b.id
-        WHERE saved_businesses.user_id = %s
-        GROUP BY saved_businesses.id, b.id, b.name, b.category, b.description, b.location
-        ORDER BY saved_businesses.id DESC
-        """,
-        (user_id,)
-    )
-    saved_businesses = cur.fetchall()
-
-    # close database
-    cur.close()
-    conn.close()
-
-    # render profile page template
-    return render_template("profile.html", user=user, user_business=user_business, saved_businesses=saved_businesses)
-
-#post business page
-@app.route("/post-business", methods=["GET", "POST"])
-def post_business():
-
-    # require login
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    user_id = session["user_id"]
-
-    # connect to database
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # prevent multiple businesses per user
-    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
-    existing = cur.fetchone()
-
-    if existing: #if they already have a business
-        cur.close()
-        conn.close()
-        return "You have already posted a business. Only one allowed per user."
-
-    # handle business post form submission
-    if request.method == "POST":
-        name = request.form["name"].strip()
-        category = request.form["category"].strip()
-        description = request.form["description"].strip()
-        location = request.form["location"].strip()
-
-        # validate category
-        if category not in BUSINESS_CATEGORIES:
-            cur.close()
-            conn.close()
-            return "Invalid category selected."
-
-        # insert business
-        cur.execute(
-            "INSERT INTO businesses (owner_id, name, category, description, location) VALUES (%s, %s, %s, %s, %s)", #%s placeholder, avoid sql injection
-            (user_id, name, category, description, location),
-        )
-        conn.commit()
-
-        # close database
-        cur.close()
-        conn.close()
-
-        # redirect to profile page after posting
-        return redirect(url_for("profile")) 
-
-    # if GET request, close database and render business post form
-    cur.close()
-    conn.close()
-    return render_template("post_business.html", categories=BUSINESS_CATEGORIES)
-
-# edit business page
-@app.route("/edit-business", methods=["GET", "POST"])
-def edit_business():
-
-    # require login
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    user_id = session["user_id"]
-
-    # connect to database
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # fetch user's business
-    cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
-    business = cur.fetchone()
-
-    # redirect to post business page if no business exists
-    if not business:
-        cur.close()
-        conn.close()
-        return redirect(url_for("post_business"))
-
-    # handle business post/edit form submission
-    if request.method == "POST":
-        name = request.form["name"].strip()
-        category = request.form["category"].strip()
-        description = request.form["description"].strip()
-        location = request.form["location"].strip()
-
-        # validate category
-        if category not in BUSINESS_CATEGORIES:
-            cur.close()
-            conn.close()
-            return "Invalid category selected."
-
-        # update business info
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM businesses WHERE id = %s", (business_id,))
+        if not cur.fetchone():
+            return "Business not found.", 404
         cur.execute(
             """
-            UPDATE businesses
-            SET name = %s, category = %s, description = %s, location = %s
-            WHERE owner_id = %s
+            INSERT INTO ratings (user_id, business_id, rating) VALUES (%s, %s, %s)
+            ON CONFLICT (user_id, business_id) DO UPDATE SET rating = EXCLUDED.rating
             """,
-            (name, category, description, location, user_id),
+            (session["user_id"], business_id, int(rating)),
         )
-        conn.commit()
+    return redirect(url_for("business_details", business_id=business_id))
 
-        # close database
-        cur.close()
-        conn.close()
 
-        # redirect to profile after update
-        return redirect(url_for("profile"))
+@app.route("/save-business/<int:business_id>", methods=["POST"])
+@login_required
+def save_business(business_id):
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO saved_businesses (user_id, business_id)
+            SELECT %s, id FROM businesses WHERE id = %s
+            ON CONFLICT (user_id, business_id) DO NOTHING
+            """,
+            (session["user_id"], business_id),
+        )
+    return redirect(safe_referrer())
 
-    # if GET request, close database and render business edit form
-    cur.close()
-    conn.close()
-    return render_template("edit_business.html", business=business, categories=BUSINESS_CATEGORIES,)
 
-#login page
+@app.route("/unsave-business/<int:business_id>", methods=["POST"])
+@login_required
+def unsave_business(business_id):
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM saved_businesses WHERE user_id = %s AND business_id = %s",
+                    (session["user_id"], business_id))
+    return redirect(safe_referrer())
+
+
+@app.route("/profile")
+@login_required
+def profile():
+    user_id = session["user_id"]
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT username, email FROM users WHERE id = %s", (user_id,))
+        user = cur.fetchone()
+        cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
+        user_business = cur.fetchone()
+        cur.execute(
+            """
+            SELECT b.id, b.name, b.category, b.description, b.location,
+                   AVG(r.rating) AS avg_rating, COUNT(r.rating) AS rating_count
+            FROM saved_businesses s
+            JOIN businesses b ON b.id = s.business_id
+            LEFT JOIN ratings r ON r.business_id = b.id
+            WHERE s.user_id = %s
+            GROUP BY s.id, b.id
+            ORDER BY s.id DESC
+            """,
+            (user_id,),
+        )
+        saved_businesses = cur.fetchall()
+
+    return render_template("profile.html", user=user, user_business=user_business,
+                           saved_businesses=saved_businesses)
+
+
+@app.route("/post-business", methods=["GET", "POST"])
+@login_required
+def post_business():
+    user_id = session["user_id"]
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM businesses WHERE owner_id = %s", (user_id,))
+        if cur.fetchone():
+            return "You have already posted a business. Only one allowed per user."
+
+        if request.method == "POST":
+            fields, error = business_form_fields()
+            if error:
+                return error
+            cur.execute(
+                "INSERT INTO businesses (owner_id, name, category, description, location) VALUES (%s, %s, %s, %s, %s)",
+                (user_id, fields["name"], fields["category"], fields["description"], fields["location"]),
+            )
+            return redirect(url_for("profile"))
+
+    return render_template("business_form.html", business=None, categories=BUSINESS_CATEGORIES)
+
+
+@app.route("/edit-business", methods=["GET", "POST"])
+@login_required
+def edit_business():
+    user_id = session["user_id"]
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM businesses WHERE owner_id = %s", (user_id,))
+        business = cur.fetchone()
+        if not business:
+            return redirect(url_for("post_business"))
+
+        if request.method == "POST":
+            fields, error = business_form_fields()
+            if error:
+                return error
+            cur.execute(
+                "UPDATE businesses SET name = %s, category = %s, description = %s, location = %s WHERE owner_id = %s",
+                (fields["name"], fields["category"], fields["description"], fields["location"], user_id),
+            )
+            return redirect(url_for("profile"))
+
+    return render_template("business_form.html", business=business, categories=BUSINESS_CATEGORIES)
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "").strip()
 
-    # handle login submission
-    if request.method=="POST": 
-        email = request.form["email"].strip()
-        password = request.form["password"].strip()
+        with get_db_connection() as conn, conn.cursor() as cur:
+            cur.execute("SELECT id, username, password_hash FROM users WHERE email = %s", (email,))
+            user = cur.fetchone()
 
-        # connect to database
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        # fetch user by email
-        cur.execute(
-            "SELECT id, username, password_hash FROM users WHERE email = %s", #%s placeholder, avoid sql injection
-            (email,)
-        )
-        user = cur.fetchone() #fetch single row returned by the query; safe because emails are unique”
-
-        # close database
-        cur.close()
-        conn.close()
-
-        # if correct login, store user data for session and redirect to explore page
         if user and check_password_hash(user["password_hash"], password):
+            session.clear()  # prevent session fixation
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             return redirect(url_for("index"))
+        return "Invalid email or password.", 401
 
-        return "Invalid email or password" #incorrect login
-    
-    # render login page
     return render_template("login.html")
 
-#logout action
+
 @app.route("/logout")
 def logout():
-    # clear all session keys
     session.clear()
     return redirect(url_for("index"))
 
-#register page
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "").strip()
+        if not (username and email and password):
+            return "All fields are required.", 400
 
-    # handle registration submission
-    if request.method == "POST": 
-        username = request.form["username"].strip() 
-        email = request.form["email"].strip()
-        password = request.form["password"].strip()
-        
-        # hash password before saving
-        password_hash = generate_password_hash(password)
-        
-        # connect to database
-        conn = get_db_connection()
-        cur = conn.cursor()
+        with get_db_connection() as conn, conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM users WHERE email = %s OR username = %s", (email, username))
+            if cur.fetchone():
+                return "Registration failed. Email or username already in use.", 409
+            cur.execute(
+                "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)",
+                (username, email, generate_password_hash(password)),
+            )
+        return redirect(url_for("login"))
 
-        # check for existing email or username
-        cur.execute(
-            "SELECT id FROM users WHERE email = %s OR username = %s",
-            (email, username),
-        )
-        existing_user = cur.fetchone()
+    return render_template("register.html")
 
-        # if account with login info exists
-        if existing_user:
-            cur.close()
-            conn.close()
-            return "Registration failed. Email or username already in use."
 
-        # insert new user
-        cur.execute(
-            "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)",
-            (username, email, password_hash)
-        )
-        conn.commit()
-
-        # close database
-        cur.close()
-        conn.close()
-
-        # redirect to login page after registering
-        return redirect(url_for("login")) 
-
-    #render register page
-    return render_template("register.html") 
+if __name__ == "__main__":
+    app.run(debug=True)

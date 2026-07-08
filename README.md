@@ -17,7 +17,7 @@ A simple Flask + PostgreSQL app for exploring local businesses. Users can regist
 1. Create a PostgreSQL database named `locally`.
 2. Install dependencies:
    ```bash
-   pip install flask psycopg[binary] werkzeug
+   pip install -r requirements.txt
    ```
 3. Create tables + seed data:
    - Open `locally_db.sql` in pgAdmin → Query Tool → Execute

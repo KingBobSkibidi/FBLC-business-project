@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Edit Business" if business else "Your Business" }}{% endblock %}
+{% block heading %}{{ "Edit Your Business" if business else "Post Your Business" }}{% endblock %}
+
+{% block content %}
+    <h2 class="center_text">{{ "Update" if business else "Enter" }} Business Information</h2>
+
+    <div class="center_text">
+        <form method="POST">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name" value="{{ business.name if business else '' }}" required><br><br>
+
+            <label for="category">Category</label>
+            <select name="category" id="category" required>
+                {% for category in categories %}
+                    <option value="{{ category }}" {% if business and business.category == category %}selected{% endif %}>{{ category }}</option>
+                {% endfor %}
+            </select><br><br>
+
+            <label for="description">Description</label>
+            <textarea name="description" id="description" required>{{ business.description if business else "" }}</textarea><br><br>
+
+            <label for="location">Location</label>
+            <input type="text" name="location" id="location" value="{{ business.location if business else '' }}" required><br><br>
+
+            <button type="submit">{{ "Save Changes" if business else "Post Business" }}</button>
+        </form>
+    </div>
+{% endblock %}

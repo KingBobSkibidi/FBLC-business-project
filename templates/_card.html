@@ -1,0 +1,26 @@
+{% macro business_card(business, saved) %}
+<div class="card">
+    <form method="POST" action="{{ url_for('unsave_business' if saved else 'save_business', business_id=business.id) }}">
+        <button class="card-save" type="submit">{{ "Saved" if saved else "Save" }}</button>
+    </form>
+
+    <div class="card-photo">Photo</div>
+
+    <div class="card-body">
+        <h2 class="card-title">
+            {{ business.name|title }}
+            <span class="card-rating">
+                {%- if business.rating_count > 0 -%}
+                    ({{ "%.1f"|format(business.avg_rating) }}/5)
+                {%- else -%}
+                    (Not rated)
+                {%- endif -%}
+            </span>
+        </h2>
+        <p><strong>Category:</strong> {{ business.category }}</p>
+        <p class="card-location">{{ business.location }}</p>
+        <p class="card-description">{{ business.description }}</p>
+        <p><a href="{{ url_for('business_details', business_id=business.id) }}">View</a></p>
+    </div>
+</div>
+{% endmacro %}
